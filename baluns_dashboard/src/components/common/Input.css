@@ -13,7 +13,15 @@
   font-family: inherit;
   font-size: 14px;
 }
-
+.field-wrap { position: relative; }
+.field-has-suffix { padding-right: 46px; }
+.field-suffix {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: flex;
+}
 .field-control:focus { outline: none; border-color: var(--burgundy-700); }
 
 .field-textarea { height: 84px; padding: 12px 14px; resize: vertical; }

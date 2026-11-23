@@ -1,5 +1,6 @@
 import Avatar from "../common/Avatar.jsx";
-import { currentUser } from "../../data/currentUser.js";
+import { useAuth } from "../../context/AuthContext.jsx";
+import { titleOf } from "../../data/roles.js";
 import "./Topbar.css";
 
 function getGreeting() {
@@ -10,6 +11,8 @@ function getGreeting() {
 }
 
 export default function Topbar() {
+  const { user: currentUser } = useAuth();
+
   return (
     <header className="topbar">
       <div className="topbar-text">
@@ -25,7 +28,7 @@ export default function Topbar() {
         <Avatar name={currentUser.name} src={currentUser.avatar} size="lg" />
         <div>
           <div className="user-name">{currentUser.name}</div>
-          <div className="user-role">{currentUser.role}</div>
+          <div className="user-role">{titleOf(currentUser)}</div>
         </div>
       </div>
     </header>

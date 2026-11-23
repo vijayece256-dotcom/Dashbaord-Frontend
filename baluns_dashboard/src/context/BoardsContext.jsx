@@ -8,7 +8,7 @@ import {
 } from "react";
 
 import { COLUMNS } from "../data/columns.js";
-import { currentUser } from "../data/currentUser.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 const BoardsContext = createContext(null);
 
@@ -132,6 +132,7 @@ function loadInitialData() {
 // -----------------------------------------
 
 export function BoardsProvider({ children }) {
+  const { user } = useAuth();
   const initialData = useRef(null);
 
   if (initialData.current === null) {
@@ -251,7 +252,7 @@ export function BoardsProvider({ children }) {
 
       comments: [],
 
-      createdBy: currentUser.name,
+      createdBy: user?.name || "Unknown",
 
       createdAt: new Date().toISOString(),
     };

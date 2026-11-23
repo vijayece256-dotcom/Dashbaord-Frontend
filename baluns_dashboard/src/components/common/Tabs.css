@@ -1,0 +1,28 @@
+.tabs {
+    display: flex;
+    gap: 6px;
+    width: fit-content;
+    max-width: 100%;
+    margin-bottom: 16px;
+    padding: 4px;
+    overflow-x: auto;
+    border-radius: 999px;
+    background: var(--surface);
+  }
+  
+  .tab {
+    padding: 8px 18px;
+    border-radius: 999px;
+    color: var(--grey-500);
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  .tab:hover { color: var(--grey-900); }
+  
+  .tab-active {
+    background: var(--burgundy-100);
+    color: var(--burgundy-800);
+    font-weight: 600;
+  }

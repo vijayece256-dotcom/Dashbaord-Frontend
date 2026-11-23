@@ -10,7 +10,7 @@ import { X, ImagePlus, Trash2, Pencil } from "lucide-react";
 import { COLUMNS } from "../../data/columns.js";
 import { useProjects } from "../../context/ProjectsContext.jsx";
 import { useBoards } from "../../context/BoardsContext.jsx";
-import { currentUser } from "../../data/currentUser.js";
+import { useAuth } from "../../context/AuthContext.jsx";
 import { toEditorHtml } from "../../utils/richText.js";
 import { generateDummyEmployees } from "../../data/dummyEmployees.js";
 import Dropdown from "../common/Dropdown.jsx";
@@ -120,6 +120,7 @@ const initialsOf = (name) =>
   (name || "").split(" ").filter(Boolean).map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?";
 
 export default function TaskDetailModal({ task, onUpdate, onAddComment, onEditComment, onClose }) {
+  const { user: currentUser } = useAuth();
   const { projects = [] } = useProjects();
   const { boards = [] } = useBoards();
 
@@ -188,7 +189,7 @@ const employees = useMemo(
   const [initialHtml] = useState(() => toEditorHtml(task.description || ""));
   const [title, setTitle] = useState(task.title);
   const [assignee, setAssignee] = useState(task.assignee || "");
-  const [reporter, setReporter] = useState(task.reporter || "");
+  const [reporter, setReporter] = useState(task.reporter || task.createdBy || "");
   const selectedAssignee = findEmployee(assignee);
 const selectedReporter = findEmployee(reporter);
   const [comment, setComment] = useState("");
@@ -207,7 +208,8 @@ const selectedReporter = findEmployee(reporter);
   updateRef.current = onUpdate;
 
   // What is typed so far, and what is already saved
-  const draft = useRef({ title: task.title, description: initialHtml, assignee: task.assignee || "", reporter: task.reporter || "" });
+  // const draft = useRef({ title: task.title, description: initialHtml, assignee: task.assignee || "", reporter: task.reporter || "" });
+  const draft = useRef({ title: task.title, description: initialHtml, assignee: task.assignee || "", reporter: task.reporter || task.createdBy || "" });
   const saved = useRef({ ...draft.current });
 
   const flush = () => {

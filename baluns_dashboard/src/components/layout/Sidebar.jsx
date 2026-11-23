@@ -1,4 +1,3 @@
-
 import { useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 
@@ -15,52 +14,32 @@ import {
 } from "lucide-react";
 
 import { useBoards } from "../../context/BoardsContext.jsx";
+import { useAuth } from "../../context/AuthContext.jsx";
 import CreateBoardModal from "../boards/CreateBoardModal.jsx";
 
 import "./Sidebar.css";
 
 const menu = [
-  {
-    to: "/dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    to: "/tasks",
-    label: "Tasks",
-    icon: ListChecks,
-  },
-  {
-    to: "/projects",
-    label: "Projects",
-    icon: FolderKanban,
-  },
-  {
-    to: "/team",
-    label: "Team",
-    icon: Users,
-  },
-  {
-    to: "/analytics",
-    label: "Analytics",
-    icon: BarChart3,
-  },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/tasks", label: "Tasks", icon: ListChecks },
+  { to: "/projects", label: "Projects", icon: FolderKanban },
+  { to: "/team", label: "Team", icon: Users },
+  { to: "/analytics", label: "Analytics", icon: BarChart3 },
 ];
 
 export default function Sidebar() {
   const navigate = useNavigate();
 
   const { boards = [], addBoard } = useBoards();
+  const { logout } = useAuth();
 
   const [showCreate, setShowCreate] = useState(false);
 
   // Count all tasks across every Kanban board
-  
-const totalTasks = useMemo(() => {
-  return boards.reduce((total, board) => {
-    return total + (board.tasks?.length ?? 0);
-  }, 0);
-}, [boards]);
+  const totalTasks = useMemo(
+    () => boards.reduce((total, board) => total + (board.tasks?.length ?? 0), 0),
+    [boards]
+  );
 
   const handleCreate = (name) => {
     const board = addBoard(name);
@@ -71,17 +50,15 @@ const totalTasks = useMemo(() => {
   };
 
   const handleLogout = () => {
-    // TODO: clear token / call logout API
-    navigate("/");
+    logout();
+    navigate("/login");
   };
 
   return (
     <aside className="sidebar">
       {/* BRAND */}
 
-      <div className="brand">
-        Baluns Technologies
-      </div>
+      <div className="brand">Baluns Technologies</div>
 
       {/* MAIN MENU */}
 
@@ -94,11 +71,7 @@ const totalTasks = useMemo(() => {
 
             <span>{label}</span>
 
-            {to === "/tasks" && (
-              <span className="badge">
-                {totalTasks}
-              </span>
-            )}
+            {to === "/tasks" && <span className="badge">{totalTasks}</span>}
           </NavLink>
         ))}
       </nav>
@@ -107,9 +80,7 @@ const totalTasks = useMemo(() => {
 
       <div className="boards-section">
         <div className="boards-head">
-          <p className="menu-label">
-            BALUNS TASK BOARD
-          </p>
+          <p className="menu-label">BALUNS TASK BOARD</p>
 
           <button
             type="button"
@@ -123,21 +94,14 @@ const totalTasks = useMemo(() => {
         </div>
 
         {boards.length === 0 ? (
-          <p className="boards-empty">
-            No boards yet. Click + to create one.
-          </p>
+          <p className="boards-empty">No boards yet. Click + to create one.</p>
         ) : (
           <nav className="nav boards-list">
             {boards.map((board) => (
-              <NavLink
-                key={board.id}
-                to={`/boards/${board.id}`}
-              >
+              <NavLink key={board.id} to={`/boards/${board.id}`}>
                 <Kanban size={20} />
 
-                <span className="board-name">
-                  {board.name}
-                </span>
+                <span className="board-name">{board.name}</span>
               </NavLink>
             ))}
           </nav>
@@ -147,21 +111,17 @@ const totalTasks = useMemo(() => {
       {/* BOTTOM MENU */}
 
       <div className="sidebar-bottom">
-        <p className="menu-label">
-          GENERAL
-        </p>
+        <p className="menu-label">GENERAL</p>
 
         <nav className="nav">
-          <NavLink to="/settings">
-            <Settings size={20} />
-            Settings
-          </NavLink>
+          
+            <NavLink to="/settings">
+              <Settings size={20} />
+              Settings
+            </NavLink>
+        
 
-          <button
-            type="button"
-            className="nav-btn"
-            onClick={handleLogout}
-          >
+          <button type="button" className="nav-btn" onClick={handleLogout}>
             <LogOut size={20} />
             Logout
           </button>
@@ -172,9 +132,7 @@ const totalTasks = useMemo(() => {
 
       {showCreate && (
         <CreateBoardModal
-          existingNames={boards.map((board) =>
-            board.name.toLowerCase()
-          )}
+          existingNames={boards.map((board) => board.name.toLowerCase())}
           onCreate={handleCreate}
           onClose={() => setShowCreate(false)}
         />
