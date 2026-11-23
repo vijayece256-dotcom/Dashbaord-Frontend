@@ -1,0 +1,36 @@
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    background: var(--surface);
+    border-radius: 18px;
+  }
+  
+  .stat-card-icon {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    background: var(--burgundy-100);
+    color: var(--burgundy-700);
+    display: grid;
+    place-items: center;
+  }
+  
+  .stat-card-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--grey-500);
+  }
+  
+  .stat-card-value {
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.15;
+  }
+  
+  .stat-card-note {
+    font-size: 12px;
+    color: var(--grey-500);
+  }

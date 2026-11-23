@@ -1,0 +1,613 @@
+
+/* ==========================================
+   WORKBOARD - PROJECT FORM MODAL
+   Width: 720px
+   Theme: Premium Rose
+========================================== */
+
+/* MODAL CONTAINER */
+
+.modal:has(.project-form-compact) {
+    width: min(720px, calc(100vw - 32px)) !important;
+    max-width: 720px !important;
+    max-height: calc(100dvh - 40px) !important;
+    height: auto !important;
+  
+    display: flex;
+    flex-direction: column;
+  
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  
+    border-radius: 22px;
+    box-sizing: border-box;
+  
+    scrollbar-width: thin;
+    scrollbar-color: #e9dce3 transparent;
+  }
+  
+  .modal:has(.project-form-compact)::-webkit-scrollbar {
+    width: 5px;
+  }
+  
+  .modal:has(.project-form-compact)::-webkit-scrollbar-thumb {
+    background: #e9dce3;
+    border-radius: 10px;
+  }
+  
+  /* Modal inner wrappers */
+  
+  .modal:has(.project-form-compact) .modal-body,
+  .modal:has(.project-form-compact) .modal-content {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
+  /* FORM */
+  
+  .project-form-compact {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  
+  /* FORM GRID */
+  
+  .pf-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 22px;
+    row-gap: 15px;
+  }
+  
+  .pf-full {
+    grid-column: 1 / -1;
+  }
+  
+  /* FORM FIELDS */
+  
+  .pf-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+  }
+  
+  .pf-field > label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  
+    font-size: 12px;
+    font-weight: 600;
+    color: #342c38;
+  }
+  
+  /* INPUTS AND SELECTS */
+  
+  .pf-field > input,
+  .pf-field > select {
+    width: 100%;
+    height: 42px;
+    min-width: 0;
+  
+    padding: 0 13px;
+  
+    border: 1px solid #e9e2ea;
+    border-radius: 10px;
+  
+    outline: none;
+    background: #fff;
+    color: #312a35;
+  
+    font-family: inherit;
+    font-size: 13px;
+  
+    box-sizing: border-box;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+  
+  .pf-field > input:focus,
+  .pf-field > select:focus {
+    border-color: #c96789;
+    box-shadow: 0 0 0 3px rgba(201, 103, 137, 0.09);
+  }
+  
+  .pf-field > input::placeholder {
+    color: #aaa1ad;
+  }
+  
+  .pf-field > select {
+    cursor: pointer;
+  }
+  
+  .pf-field small {
+    color: #d54760;
+    font-size: 10px;
+  }
+  
+  /* EMPLOYEE COUNT */
+  
+  .pf-count {
+    color: #c96789;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  
+  /* EMPLOYEE SELECT FIELD */
+  
+  .pf-employee-field {
+    position: relative;
+    min-width: 0;
+  }
+  
+  .pf-employee-control {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  
+    width: 100%;
+    min-height: 43px;
+    padding: 7px 13px;
+  
+    border: 1px solid #e9e2ea;
+    border-radius: 10px;
+  
+    background: #fff;
+    cursor: pointer;
+    box-sizing: border-box;
+  
+    transition: border-color 0.2s ease;
+  }
+  
+  .pf-employee-control:hover {
+    border-color: #d6a4b6;
+  }
+  
+  .pf-placeholder {
+    color: #aaa1ad;
+    font-size: 12px;
+  }
+  
+  .pf-chevron {
+    flex-shrink: 0;
+    color: #8c8290;
+    font-size: 18px;
+  }
+  
+  /* SELECTED EMPLOYEE CHIPS */
+  
+  .pf-chips {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 0;
+  }
+  
+  .pf-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  
+    padding: 5px 9px;
+  
+    border-radius: 7px;
+    background: #fbeaf0;
+    color: #aa4d70;
+  
+    font-size: 11px;
+    font-weight: 500;
+  }
+  
+  .pf-chip button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    padding: 0;
+    border: none;
+  
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  
+  /* ==========================================
+     EMPLOYEE DROPDOWN
+     Kept inside modal layout
+  ========================================== */
+  
+  .pf-employee-dropdown {
+    position: relative;
+    top: auto;
+    left: auto;
+    right: auto;
+  
+    z-index: 10;
+  
+    width: 100%;
+    margin-top: 7px;
+    padding: 11px;
+  
+    background: #fff;
+    border: 1px solid #eee5eb;
+    border-radius: 12px;
+  
+    box-shadow: 0 5px 18px rgba(42, 25, 38, 0.07);
+    box-sizing: border-box;
+  }
+  
+  /* EMPLOYEE SEARCH */
+  
+  .pf-employee-search {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+  
+    border: 1px solid #eee6ee;
+    border-radius: 9px;
+  
+    background: #fff;
+    box-sizing: border-box;
+  }
+  
+  .pf-employee-search:focus-within {
+    border-color: #c96789;
+  }
+  
+  .pf-employee-search input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+  
+    border: none;
+    outline: none;
+    background: transparent;
+  
+    font-family: inherit;
+    font-size: 12px;
+    color: #312a35;
+  }
+  
+  .pf-employee-search input::placeholder {
+    color: #aaa1ad;
+  }
+  
+  /* EMPLOYEE OPTIONS SCROLL AREA */
+  
+  .pf-employee-options {
+    max-height: 180px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  
+    margin: 8px 0;
+    padding-right: 5px;
+  
+    scrollbar-width: thin;
+    scrollbar-color: #e6c7d3 transparent;
+  }
+  
+  .pf-employee-options::-webkit-scrollbar {
+    width: 5px;
+  }
+  
+  .pf-employee-options::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .pf-employee-options::-webkit-scrollbar-thumb {
+    background: #e6c7d3;
+    border-radius: 20px;
+  }
+  
+  /* EMPLOYEE ROW */
+  
+  .pf-employee-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  
+    min-height: 54px;
+    padding: 9px 12px;
+  
+    border-radius: 9px;
+    cursor: pointer;
+  
+    transition: background 0.2s ease;
+    box-sizing: border-box;
+  }
+  
+  .pf-employee-option:hover {
+    background: #fff1f5;
+  }
+  
+  .pf-employee-option:has(input:checked) {
+    background: #fdf0f5;
+  }
+  
+  /* CHECKBOX */
+  
+  .pf-employee-option input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    margin: 0;
+  
+    flex-shrink: 0;
+    accent-color: #c96789;
+    cursor: pointer;
+  }
+  
+  /* EMPLOYEE AVATAR */
+  
+  .pf-employee-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+  
+    border-radius: 50%;
+    background: #fbeaf0;
+    color: #a94d70;
+  
+    font-size: 11px;
+    font-weight: 700;
+  }
+  
+  /* EMPLOYEE NAME AND ROLE */
+  
+  .pf-employee-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .pf-employee-info strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  
+    font-size: 13px;
+    font-weight: 600;
+    color: #302936;
+  }
+  
+  .pf-employee-info span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  
+    font-size: 11px;
+    color: #938b98;
+  }
+  
+  /* EMPLOYEE ID */
+  
+  .pf-employee-id {
+    flex-shrink: 0;
+    margin-left: auto;
+  
+    font-size: 11px;
+    color: #aaa2ad;
+    white-space: nowrap;
+  }
+  
+  /* EMPTY EMPLOYEE STATE */
+  
+  .pf-no-employees {
+    padding: 16px 10px;
+    margin: 0;
+  
+    text-align: center;
+    color: #8b8490;
+    font-size: 12px;
+  }
+  
+  /* DROPDOWN DONE BUTTON */
+  
+  .pf-done {
+    display: block;
+    width: 100%;
+    height: 36px;
+  
+    border: none;
+    border-radius: 8px;
+  
+    background: #fbeaf0;
+    color: #a74f70;
+  
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+  
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  
+  .pf-done:hover {
+    background: #f5dce5;
+  }
+  
+  /* ==========================================
+     FORM ACTIONS
+  ========================================== */
+  
+  .pf-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  
+    margin-top: 20px;
+    padding-top: 16px;
+  
+    border-top: 1px solid #f0ebf0;
+  }
+  
+  .pf-action-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
+  
+  .pf-cancel,
+  .pf-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  
+    min-height: 40px;
+    padding: 10px 19px;
+  
+    border-radius: 10px;
+  
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+  
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  /* CANCEL */
+  
+  .pf-cancel {
+    border: 1px solid #e5dfe6;
+    background: #fff;
+    color: #514a56;
+  }
+  
+  .pf-cancel:hover {
+    background: #faf7f9;
+  }
+  
+  /* SUBMIT */
+  
+  .pf-submit {
+    border: 1px solid #c96789;
+    background: #c96789;
+    color: #fff;
+  }
+  
+  .pf-submit:hover {
+    background: #b65175;
+    border-color: #b65175;
+  }
+  
+  /* DELETE */
+  
+  .pf-delete {
+    border: none;
+    background: transparent;
+    color: #d44c63;
+  
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+  
+    cursor: pointer;
+  }
+  
+  /* DELETE CONFIRMATION */
+  
+  .pf-delete-confirm {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  
+    margin-top: 12px;
+    padding: 12px;
+  
+    background: #fff1f3;
+    border-radius: 9px;
+  
+    font-size: 12px;
+  }
+  
+  .pf-delete-confirm button {
+    padding: 6px 10px;
+  
+    border: 1px solid #e6b6c2;
+    border-radius: 7px;
+  
+    background: #fff;
+    cursor: pointer;
+  }
+  
+  /* ==========================================
+     RESPONSIVE
+  ========================================== */
+  
+  @media (max-width: 640px) {
+    .modal:has(.project-form-compact) {
+      width: calc(100vw - 24px) !important;
+      max-width: calc(100vw - 24px) !important;
+      max-height: calc(100dvh - 24px) !important;
+      border-radius: 16px;
+    }
+  
+    .pf-grid {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+  
+    .pf-full {
+      grid-column: 1;
+    }
+  
+    .pf-field > input,
+    .pf-field > select {
+      height: 40px;
+    }
+  
+    .pf-employee-options {
+      max-height: 160px;
+    }
+  
+    .pf-actions {
+      flex-wrap: wrap;
+    }
+  
+    .pf-action-right {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+  
+  /* SHORT DESKTOP SCREENS */
+  
+  @media (max-height: 750px) {
+    .modal:has(.project-form-compact) {
+      max-height: calc(100dvh - 24px) !important;
+    }
+  
+    .pf-grid {
+      row-gap: 11px;
+    }
+  
+    .pf-employee-options {
+      max-height: 140px;
+    }
+  
+    .pf-actions {
+      margin-top: 14px;
+      padding-top: 12px;
+    }
+  }
+  

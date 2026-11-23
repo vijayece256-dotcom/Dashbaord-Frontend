@@ -1,0 +1,52 @@
+.dash-card {
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 20px;
+  }
+  
+  .dash-card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+  
+  .health {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+  
+  .health-ring { position: relative; width: 150px; height: 150px; flex-shrink: 0; }
+  
+  .health-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .health-center strong { font-size: 30px; font-weight: 600; line-height: 1; }
+  .health-center span { margin-top: 4px; font-size: 11px; color: var(--grey-500); }
+  
+  .health-list {
+    flex: 1;
+    min-width: 180px;
+    list-style: none;
+  }
+  
+  .health-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #ececf0;
+  }
+  
+  .health-list li:last-child { border-bottom: none; }
+  .health-list span { color: var(--grey-500); }
+  .health-list strong { font-weight: 600; }
+  .health-alert { color: var(--burgundy-700); }

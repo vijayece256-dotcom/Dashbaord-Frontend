@@ -1,0 +1,349 @@
+.task-card {
+    background: var(--panel-bg);
+    border: 1px solid #e2e2e6;
+    border-radius: 14px;
+    padding: 14px;
+    cursor: grab;
+  }
+  .task-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .task-card:active { cursor: grabbing; }
+  .task-card:hover { border-color: var(--burgundy-300); }
+  
+  .task-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .task-number{
+    font-size: 11px;
+    font-weight: 500;
+    padding-right: 6px;
+    border-radius: 6px;
+    text-transform: capitalize;
+  }
+  .task-priority {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 5px;
+    border-radius: 6px;
+    text-transform: capitalize;
+  }
+  
+  .task-priority-high { background: var(--burgundy-100); color: var(--burgundy-700); }
+  .task-priority-medium { background: var(--grey-100); color: var(--grey-900); }
+  .task-priority-low { background: var(--grey-100); color: var(--grey-500); }
+  
+  .task-delete {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--grey-500);
+  }
+  
+  .task-delete:hover { background: var(--burgundy-100); color: var(--burgundy-700); }
+  
+  .task-title { font-size: 14px; font-weight: 600; line-height: 1.35; }
+  
+  .task-desc {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--grey-500);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .task-card-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+  }
+  
+  .task-due {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--grey-500);
+  }
+  
+  .task-assignee {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--burgundy-700);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    display: grid;
+    place-items: center;
+  }
+  .task-tag {
+    margin-left: auto;
+    font-size: 11px;
+    color: #8a8a96;
+  }
+  .task-card-top .task-delete { margin-left: 0; }
+
+/* =========================================
+   TASK DELETE CONFIRMATION MODAL
+========================================= */
+
+.task-delete-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+  box-sizing: border-box;
+
+  background: rgba(25, 17, 25, 0.48);
+  backdrop-filter: blur(3px);
+}
+
+/* Confirmation card */
+
+.task-delete-modal {
+  position: relative;
+
+  width: min(420px, 100%);
+  padding: 28px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #f0e5ea;
+  border-radius: 18px;
+
+  box-shadow:
+    0 20px 60px rgba(35, 20, 30, 0.18);
+
+  animation: taskDeleteAppear 0.2s ease-out;
+}
+
+/* Close button */
+
+.task-delete-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 30px;
+  height: 30px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: transparent;
+  color: #948894;
+
+  cursor: pointer;
+}
+
+.task-delete-close:hover {
+  background: #f8edf1;
+  color: #82143c;
+}
+
+/* Warning icon */
+
+.task-delete-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 48px;
+  height: 48px;
+
+  margin-bottom: 18px;
+
+  background: #fff0f3;
+  border-radius: 13px;
+
+  color: #c34868;
+}
+
+/* Title */
+
+.task-delete-modal h3 {
+  margin: 0 0 8px;
+
+  font-size: 19px;
+  font-weight: 650;
+  color: #30242c;
+}
+
+/* Description */
+
+.task-delete-description {
+  margin: 0;
+
+  color: #8c818b;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+/* Task preview */
+
+.task-delete-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  margin-top: 20px;
+  padding: 14px;
+
+  background: #fcf7f9;
+  border: 1px solid #f0e3e9;
+  border-radius: 10px;
+
+  min-width: 0;
+}
+
+.task-delete-number {
+  flex-shrink: 0;
+
+  padding: 5px 8px;
+
+  background: #f5e3ea;
+  border-radius: 6px;
+
+  color: #82143c;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.task-delete-preview strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+
+  color: #342a32;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Actions */
+
+.task-delete-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 24px;
+}
+
+.task-delete-cancel,
+.task-delete-confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  min-height: 40px;
+  padding: 0 17px;
+
+  border-radius: 9px;
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* Cancel */
+
+.task-delete-cancel {
+  background: #ffffff;
+  border: 1px solid #e5dce2;
+  color: #554851;
+}
+
+.task-delete-cancel:hover {
+  background: #f8f5f7;
+}
+
+/* Delete */
+
+.task-delete-confirm {
+  background: #82143c;
+  border: 1px solid #82143c;
+  color: #ffffff;
+}
+
+.task-delete-confirm:hover {
+  background: #650e2d;
+}
+
+.task-delete-confirm:active {
+  transform: scale(0.97);
+}
+
+.task-delete-cancel:focus-visible,
+.task-delete-confirm:focus-visible,
+.task-delete-close:focus-visible {
+  outline: 2px solid #c96789;
+  outline-offset: 3px;
+}
+
+/* Animation */
+
+@keyframes taskDeleteAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Responsive */
+
+@media (max-width: 480px) {
+  .task-delete-modal {
+    padding: 22px;
+    border-radius: 15px;
+  }
+
+  .task-delete-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .task-delete-cancel,
+  .task-delete-confirm {
+    padding: 0 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .task-delete-modal {
+    animation: none;
+  }
+}

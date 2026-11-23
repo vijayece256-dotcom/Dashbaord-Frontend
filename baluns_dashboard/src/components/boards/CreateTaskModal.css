@@ -1,0 +1,649 @@
+
+/* =========================================
+   CREATE TASK MODAL
+   Premium Rose Theme
+========================================= */
+
+.modal:has(.create-task-form) {
+  width: min(720px, calc(100vw - 40px)) !important;
+  max-width: 720px !important;
+  max-height: calc(100dvh - 40px) !important;
+  box-sizing: border-box;
+  border-radius: 22px;
+  overflow: visible !important;
+}
+
+/* Prevent nested containers clipping dropdowns */
+
+.modal:has(.create-task-form) .modal-body,
+.modal:has(.create-task-form) .modal-content {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Main form */
+
+.create-task-form {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* Form spacing */
+
+.create-task-form .form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* =========================================
+   FORM FIELDS
+========================================= */
+
+.create-task-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.create-task-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #343039;
+}
+
+.create-task-error {
+  color: #c0392b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Priority + Due date */
+
+.create-task-row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.create-task-row > * {
+  min-width: 0;
+}
+
+.create-task-date {
+  width: 100%;
+  min-width: 0;
+}
+
+/* =========================================
+   SHARED DROPDOWN COMPONENT
+   Dropdown.jsx
+========================================= */
+
+.create-task-form .dropdown {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Trigger */
+
+.create-task-form .dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #e1d8df;
+  border-radius: 11px;
+
+  color: #352a32;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.create-task-form .dropdown-trigger:hover {
+  border-color: #c96789;
+  background: #fffafb;
+}
+
+.create-task-form .dropdown-trigger-open,
+.create-task-form .dropdown-trigger:focus-visible {
+  outline: none;
+  border-color: #c96789;
+  box-shadow: 0 0 0 3px rgba(201, 103, 137, 0.09);
+}
+
+/* Colored status dot */
+
+.create-task-form .dropdown-dot {
+  width: 9px;
+  height: 9px;
+  min-width: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Dropdown text */
+
+.create-task-form .dropdown-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Optional label */
+
+.create-task-form .dropdown-label {
+  color: #948994;
+  font-weight: 400;
+}
+
+/* Chevron */
+
+.create-task-form .dropdown-chevron {
+  flex-shrink: 0;
+  color: #82143c;
+  transition: transform 0.2s ease;
+}
+
+.create-task-form
+.dropdown-trigger-open
+.dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+/* =========================================
+   SHARED DROPDOWN MENU
+========================================= */
+
+.create-task-form .dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 2000;
+
+  max-height: 180px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  margin: 0;
+  padding: 6px;
+
+  list-style: none;
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #eadfe5;
+  border-radius: 12px;
+
+  box-shadow:
+    0 12px 30px rgba(42, 20, 30, 0.12),
+    0 3px 8px rgba(42, 20, 30, 0.04);
+
+  scrollbar-width: thin;
+  scrollbar-color: #dfb8c8 transparent;
+}
+
+/* Options */
+
+.create-task-form .dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+
+  min-height: 42px;
+  padding: 9px 12px;
+
+  border-radius: 8px;
+
+  color: #40363d;
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.create-task-form .dropdown-option:hover,
+.create-task-form .dropdown-option-active {
+  background: #fff0f5;
+  color: #82143c;
+}
+
+.create-task-form
+.dropdown-option[aria-selected="true"] {
+  background: #f9e8ef;
+  color: #82143c;
+  font-weight: 600;
+}
+
+/* Checkmark */
+
+.create-task-form .dropdown-check {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: #82143c;
+}
+
+/* =========================================
+   EMPLOYEE SELECTOR
+========================================= */
+
+.ct-assignee-field {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Employee select button */
+
+.ct-assignee-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 14px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #e1d8df;
+  border-radius: 11px;
+
+  color: #352a32;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.ct-assignee-trigger:hover {
+  border-color: #c96789;
+}
+
+.ct-assignee-trigger.is-open,
+.ct-assignee-trigger:focus-visible {
+  border-color: #c96789;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(201, 103, 137, 0.08);
+}
+
+.ct-placeholder {
+  color: #aaa1ad;
+  font-size: 13px;
+}
+
+/* Selected employee */
+
+.ct-selected-employee {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* =========================================
+   EMPLOYEE DROPDOWN PANEL
+========================================= */
+
+/*
+  Opens upward so the employee list
+  stays within the visible modal area.
+*/
+
+.ct-employee-dropdown {
+  position: absolute;
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: 0;
+  right: 0;
+
+  z-index: 3000;
+
+  width: 100%;
+  padding: 10px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #eadfe5;
+  border-radius: 13px;
+
+  box-shadow:
+    0 -12px 35px rgba(35, 20, 30, 0.12),
+    0 3px 10px rgba(35, 20, 30, 0.04);
+}
+
+/* =========================================
+   EMPLOYEE SEARCH
+========================================= */
+
+.ct-employee-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+  border: 1px solid #e9e2ea;
+  border-radius: 9px;
+
+  color: #8c8290;
+}
+
+.ct-employee-search:focus-within {
+  border-color: #c96789;
+}
+
+.ct-employee-search input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+
+  border: none;
+  outline: none;
+  background: transparent;
+
+  color: #352a32;
+  font: inherit;
+  font-size: 12px;
+}
+
+.ct-employee-search input::placeholder {
+  color: #aaa1ad;
+}
+
+/* =========================================
+   EMPLOYEE LIST
+========================================= */
+
+.ct-employee-list {
+  max-height: 190px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  margin-top: 8px;
+  padding-right: 4px;
+
+  overscroll-behavior: contain;
+
+  scrollbar-width: thin;
+  scrollbar-color: #dfb8c8 transparent;
+}
+
+/* Employee option */
+
+.ct-employee-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  min-height: 54px;
+  padding: 9px 10px;
+
+  box-sizing: border-box;
+
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+
+  text-align: left;
+  font: inherit;
+
+  cursor: pointer;
+
+  transition: background 0.15s ease;
+}
+
+.ct-employee-option:hover,
+.ct-employee-option.is-selected {
+  background: #fff0f5;
+}
+
+/* =========================================
+   EMPLOYEE AVATAR
+========================================= */
+
+.ct-employee-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #fbeaf0;
+  color: #a94d70;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* =========================================
+   EMPLOYEE INFORMATION
+========================================= */
+
+.ct-employee-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  flex: 1;
+  min-width: 0;
+}
+
+.ct-employee-info strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 13px;
+  font-weight: 600;
+  color: #302936;
+}
+
+.ct-employee-info small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 11px;
+  color: #938b98;
+}
+
+/* Employee ID */
+
+.ct-employee-id {
+  margin-left: auto;
+  flex-shrink: 0;
+
+  font-size: 10px;
+  color: #aaa2ad;
+  white-space: nowrap;
+}
+
+/* No employees */
+
+.ct-no-employees {
+  padding: 20px 12px;
+  text-align: center;
+
+  color: #938b98;
+  font-size: 12px;
+}
+
+/* =========================================
+   SCROLLBAR STYLING
+========================================= */
+
+.ct-employee-list::-webkit-scrollbar,
+.create-task-form .dropdown-menu::-webkit-scrollbar {
+  width: 5px;
+}
+
+.ct-employee-list::-webkit-scrollbar-track,
+.create-task-form .dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ct-employee-list::-webkit-scrollbar-thumb,
+.create-task-form .dropdown-menu::-webkit-scrollbar-thumb {
+  background: #dfb8c8;
+  border-radius: 20px;
+}
+
+.ct-employee-list::-webkit-scrollbar-thumb:hover,
+.create-task-form .dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #c96789;
+}
+
+/* =========================================
+   MODAL ACTION BUTTONS
+========================================= */
+
+.create-task-form .modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+
+  margin-top: 20px;
+  padding-top: 15px;
+
+  border-top: 1px solid #f0e9ed;
+}
+
+/* =========================================
+   RESPONSIVE DESIGN
+========================================= */
+
+@media (max-width: 768px) {
+  .modal:has(.create-task-form) {
+    width: min(620px, calc(100vw - 32px)) !important;
+    max-width: 620px !important;
+  }
+
+  .create-task-form .form-stack {
+    gap: 14px;
+  }
+
+  .ct-employee-list {
+    max-height: 160px;
+  }
+}
+
+@media (max-width: 640px) {
+  .modal:has(.create-task-form) {
+    width: calc(100vw - 24px) !important;
+    max-width: none !important;
+    max-height: calc(100dvh - 24px) !important;
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+    border-radius: 18px;
+  }
+
+  .create-task-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .create-task-row > * {
+    width: 100%;
+  }
+
+  .create-task-form .form-stack {
+    gap: 13px;
+  }
+
+  .create-task-form .dropdown-trigger,
+  .ct-assignee-trigger {
+    min-height: 44px;
+  }
+
+  /* Keep dropdown in normal flow on mobile */
+
+  .ct-employee-dropdown {
+    position: static;
+    width: 100%;
+    margin-top: 6px;
+
+    box-shadow: 0 8px 24px rgba(35, 20, 30, 0.1);
+  }
+
+  .ct-employee-list {
+    max-height: 160px;
+  }
+
+  .create-task-form .dropdown-menu {
+    max-height: 150px;
+  }
+
+  .create-task-form .modal-actions {
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+}
+
+/* =========================================
+   REDUCED MOTION
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .create-task-form *,
+  .create-task-form *::before,
+  .create-task-form *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

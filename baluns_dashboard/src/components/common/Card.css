@@ -1,0 +1,15 @@
+.card {
+    background: var(--surface);
+    border-radius: 18px;
+    padding: 20px;
+  }
+  
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .card-title { font-size: 16px; font-weight: 600; }

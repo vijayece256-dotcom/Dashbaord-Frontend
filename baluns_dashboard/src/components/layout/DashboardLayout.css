@@ -1,0 +1,42 @@
+.shell {
+    height: 100%;
+  }
+  
+  .frame {
+    width: 100%;
+    height: 100%;
+    background: var(--surface);
+    padding: 12px;
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 12px;
+  }
+  
+  .main-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    min-height: 0;
+  }
+  
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel-bg);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  
+  @media (max-width: 800px) {
+    .shell,
+    .frame { height: auto; }
+    .frame { grid-template-columns: 1fr; }
+  }
+  
+  @media (max-width: 520px) {
+    .shell { padding: 8px; }
+  }

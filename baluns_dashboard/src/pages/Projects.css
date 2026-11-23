@@ -1,0 +1,190 @@
+
+/* =====================================
+   PROJECTS PAGE
+===================================== */
+
+.projects-page {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+  
+  /* Header */
+  
+  .projects-page .page-header {
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+  
+  /* Statistics */
+  
+  .projects-page .stat-grid {
+    flex-shrink: 0;
+  }
+  
+  /* =====================================
+     PROJECTS WHITE CARD
+  ===================================== */
+  
+  .projects-page .projects-card {
+    display: flex;
+    flex-direction: column;
+  
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  
+    background: #ffffff;
+    border-radius: 18px;
+  }
+  
+  /* =====================================
+     SEARCH AND FILTERS
+  ===================================== */
+  
+  .projects-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  
+    margin-bottom: 14px;
+    flex-shrink: 0;
+  }
+  
+  .projects-toolbar .search-input {
+    background: var(--panel-bg);
+    height: 42px;
+  }
+  
+  /* =====================================
+     TABLE SCROLL AREA
+  ===================================== */
+  
+  .projects-table-scroll {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+  
+    overflow-y: auto;
+    overflow-x: auto;
+  
+    scrollbar-width: thin;
+    scrollbar-color: #d7b7c4 transparent;
+  }
+  
+  .projects-table-scroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .projects-table-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .projects-table-scroll::-webkit-scrollbar-thumb {
+    background: #d7b7c4;
+    border-radius: 10px;
+  }
+  
+  .projects-table-scroll::-webkit-scrollbar-thumb:hover {
+    background: #a86c85;
+  }
+  
+  /* =====================================
+     TABLE STYLING
+  ===================================== */
+  
+  .projects-table-scroll table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  /* Sticky table headings */
+  
+  .projects-table-scroll thead {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #ffffff;
+  }
+  
+  .projects-table-scroll th {
+    background: #ffffff;
+    white-space: nowrap;
+  }
+  
+  /* Table rows */
+  
+  .projects-table-scroll td {
+    vertical-align: middle;
+  }
+  
+  /* Project name */
+  
+  .projects-table-scroll td strong {
+    font-weight: 600;
+    color: #17131c;
+  }
+  
+  /* =====================================
+     PROGRESS CELL
+  ===================================== */
+  
+  .progress-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .progress-cell span {
+    min-width: 38px;
+    font-weight: 600;
+  }
+  
+  .progress-cell .progress {
+    flex: 1;
+    min-width: 60px;
+    height: 8px;
+  }
+  
+  /* =====================================
+     PAGINATION
+  ===================================== */
+  
+  .projects-card .pagination {
+    flex-shrink: 0;
+    background: #ffffff;
+    padding-top: 12px;
+    border-top: 1px solid #f0edf0;
+  }
+  
+  /* =====================================
+     RESPONSIVE
+  ===================================== */
+  
+  @media (max-width: 768px) {
+    .projects-page {
+      height: auto;
+      min-height: 0;
+      overflow: visible;
+    }
+  
+    .projects-page .projects-card {
+      min-height: 400px;
+      max-height: 65vh;
+    }
+  
+    .projects-table-scroll {
+      overflow: auto;
+    }
+  
+    .projects-toolbar {
+      gap: 8px;
+    }
+  }
+  

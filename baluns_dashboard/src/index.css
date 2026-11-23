@@ -1,0 +1,86 @@
+
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
+:root {
+  --burgundy-900: #3d0a1e;
+  --burgundy-800: #5a1230;
+  --burgundy-700: #7a1a40;
+  --burgundy-500: #a8355f;
+  --burgundy-300: #d08aa5;
+  --burgundy-100: #f3dde5;
+
+  --grey-100: #efeff1;
+  --grey-300: #c9c9cf;
+  --grey-500: #8b8b94;
+  --grey-900: #1f1f24;
+
+  --surface: #ffffff;
+  --app-bg: #e9e9ec;
+  --panel-bg: var(--grey-100);
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+}
+
+/* GLOBAL RESET */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+  background: var(--app-bg);
+  color: var(--grey-900);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* PREVENT ACCIDENTAL TEXT SELECTION */
+
+body {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ALLOW TYPING AND TEXT SELECTION */
+
+input,
+textarea,
+select,
+[contenteditable="true"],
+[role="textbox"] {
+  user-select: text;
+  -webkit-user-select: text;
+  caret-color: auto;
+}
+
+/* LINKS */
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* BUTTONS */
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+/* KEYBOARD FOCUS */
+
+:focus-visible {
+  outline: 2px solid var(--burgundy-500);
+  outline-offset: 2px;
+}

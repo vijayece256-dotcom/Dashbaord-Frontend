@@ -1,0 +1,163 @@
+.tasks-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 4px;
+  }
+  
+  .tasks-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .tasks-head h2 { font-size: 26px; font-weight: 600; }
+  .tasks-head p { font-size: 13px; color: #6b6b76; margin-top: 2px; }
+  
+  .tasks-toggle {
+    display: inline-flex;
+    padding: 4px;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid #e3e3ea;
+  }
+  .tasks-toggle button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 16px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+  }
+  .tasks-toggle button.on { background: var(--burgundy-700); color: #fff; }
+  
+  /* Filters */
+  .tasks-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #e8e8ee;
+  }
+  .tasks-filters select,
+  .tasks-filters input[type="date"] {
+    height: 38px;
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 1px solid #dcdce4;
+    background: #fff;
+    font-size: 13px;
+    color: #222;
+  }
+  .tasks-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 38px;
+    padding: 0 12px;
+    min-width: 240px;
+    flex: 1 1 240px;
+    border-radius: 10px;
+    border: 1px solid #dcdce4;
+    color: #888;
+  }
+  .tasks-search input {
+    border: 0;
+    outline: 0;
+    flex: 1;
+    font-size: 13px;
+    background: transparent;
+    color: #222;
+  }
+  .tasks-dates { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #777; }
+  .tasks-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid var(--burgundy-700);
+    background: #fff;
+    color: var(--burgundy-700);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  
+  .tasks-empty {
+    padding: 60px 0;
+    text-align: center;
+    color: #777;
+    background: #fff;
+    border-radius: 16px;
+  }
+  
+  /* List view */
+  .tasks-table-wrap {
+    overflow-x: auto;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #e8e8ee;
+  }
+  .tasks-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .tasks-table th {
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #7a7a86;
+    background: #fafafc;
+    border-bottom: 1px solid #ececf2;
+    white-space: nowrap;
+  }
+  .tasks-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #f0f0f5;
+    white-space: nowrap;
+  }
+  .tasks-table tbody tr:hover { background: #fbf6f8; }
+  .tk-id { color: #8a8a96; font-family: monospace; }
+  .tk-title { font-weight: 600; white-space: normal !important; min-width: 180px; }
+  
+  .tk-people { display: flex; }
+  .tk-people > span + span { margin-left: -6px; }
+  
+  .tk-priority {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: capitalize;
+  }
+  .tk-priority-low { background: #e6f8ee; color: #1b7f55; }
+  .tk-priority-medium { background: #fff3dc; color: #a66a00; }
+  .tk-priority-high { background: #fde7ea; color: #b4233a; }
+  
+  .tk-status { display: inline-flex; align-items: center; gap: 7px; font-weight: 500; }
+  .tk-status i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  
+  /* Kanban view (cards and columns reuse the board styles) */
+  .tasks-kanban {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(260px, 1fr));
+    gap: 14px;
+    overflow-x: auto;
+  }
+  .tasks-kanban .kanban-col { min-height: 420px; }
