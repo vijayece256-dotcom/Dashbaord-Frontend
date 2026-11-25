@@ -113,6 +113,70 @@
   }
   
   .sidebar-bottom { margin-top: auto; }
+
+
+  /* Board row */
+.sidebar-board-row {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.sidebar-board-row > a {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Board name */
+.sidebar-board-row .board-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Delete board button */
+.sidebar-board-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  margin-right: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: #918798;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s, background 0.2s, color 0.2s;
+}
+
+/* Show delete icon on hover */
+.sidebar-board-row:hover .sidebar-board-delete,
+.sidebar-board-row:focus-within .sidebar-board-delete {
+  opacity: 1;
+}
+
+/* Delete icon hover */
+.sidebar-board-delete:hover {
+  background: #fce4e8;
+  color: #c62828;
+}
+
+.sidebar-board-delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+@media (hover: none) {
+  .sidebar-board-delete {
+    opacity: 1;
+  }
+}
   
   @media (max-width: 800px) {
     .sidebar { padding: 14px 0; }

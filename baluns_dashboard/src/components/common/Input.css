@@ -22,6 +22,34 @@
   transform: translateY(-50%);
   display: flex;
 }
+
+.field-eye {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--grey-500);
+}
+.field-eye:hover { background: var(--grey-100); color: var(--burgundy-700); }
+
+.field-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--panel-bg);
+  list-style: none;
+}
+.field-rules li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--grey-500);
+}
+.field-rule-pass { color: var(--burgundy-700) !important; font-weight: 500; }
 .field-control:focus { outline: none; border-color: var(--burgundy-700); }
 
 .field-textarea { height: 84px; padding: 12px 14px; resize: vertical; }

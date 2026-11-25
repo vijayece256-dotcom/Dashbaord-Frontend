@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { PASSWORD_RULES, passwordIsValid } from "../utils/passwordRules.js";
 import Card from "../components/common/Card.jsx";
 import Input from "../components/common/Input.jsx";
 import Button from "../components/common/Button.jsx";
@@ -25,13 +26,18 @@ export default function ChangePassword() {
 
     const found = {};
     if (!current) found.current = "Enter the temporary password you were given.";
-    if (next.length < 8) found.next = "Use at least 8 characters.";
+    if (!passwordIsValid(next)) found.next = "Your new password does not meet all the requirements.";
+    if (next && next === current) found.next = "Choose a password different from the temporary one.";
     if (confirm !== next) found.confirm = "Passwords do not match.";
     setErrors(found);
     if (Object.keys(found).length) return;
 
     setBusy(true);
-    const result = await changePassword({ currentPassword: current, newPassword: next });
+    const result = await changePassword({
+      currentPassword: current,
+      newPassword: next,
+      confirmPassword: confirm,
+    });
     setBusy(false);
 
     // On success the account updates and this page redirects to the dashboard by itself
@@ -63,7 +69,7 @@ export default function ChangePassword() {
             label="New password"
             type="password"
             autoComplete="new-password"
-            placeholder="At least 8 characters"
+            rules={PASSWORD_RULES}
             value={next}
             error={errors.next}
             onChange={(e) => {

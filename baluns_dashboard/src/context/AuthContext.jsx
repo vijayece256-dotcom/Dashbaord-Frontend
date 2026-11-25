@@ -1,263 +1,210 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { ROLES } from "../data/roles.js";
-
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { API_BASE_URL } from "../config/env.js";
+import { jwtDecode } from "jwt-decode";
 const AuthContext = createContext(null);
+const SESSION_KEY = "baluns_auth_session";
 
-const ACCOUNTS_KEY = "baluns_accounts";
-const SESSION_KEY = "baluns_session";
-const DESIGNATIONS_KEY = "baluns_designations";
+const REFRESH_BEFORE_MS = 60 * 1000; // refresh 1 minute before the token expires
+const RETRY_MS = 15 * 1000; // after a network hiccup, try again in 15 seconds
 
-const DENIED = { ok: false, error: "Only the CEO can do this." };
-
-function loadList(key) {
+function loadSession() {
   try {
-    const saved = JSON.parse(localStorage.getItem(key));
-    return Array.isArray(saved) ? saved : [];
+    const saved = JSON.parse(localStorage.getItem(SESSION_KEY));
+    if (!saved?.token) return null;
+    // An expired refresh token means the person has to sign in again
+    if (saved.refreshExpiresAt && new Date(saved.refreshExpiresAt) < new Date()) return null;
+    return saved;
   } catch {
-    return [];
+    return null;
   }
 }
 
-const toHex = (buffer) =>
-  [...new Uint8Array(buffer)].map((b) => b.toString(16).padStart(2, "0")).join("");
-
-const makeSalt = () => toHex(crypto.getRandomValues(new Uint8Array(16)));
-
-// Passwords are never stored as typed, only as a salted SHA-256 hash.
-async function hashPassword(password, salt) {
-  const data = new TextEncoder().encode(salt + password);
-  return toHex(await crypto.subtle.digest("SHA-256", data));
-}
-
-// 12 characters, no look-alikes (0/O, 1/l/I)
-function generatePassword() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
-  const bytes = crypto.getRandomValues(new Uint8Array(12));
-  return [...bytes].map((b) => chars[b % chars.length]).join("");
-}
-
-const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-
-// Never expose the hash or salt to the rest of the app
-const publicUser = ({ passwordHash, salt, ...rest }) => rest;
+// "vijay.kumar@baluns.com" -> "Vijay Kumar" (until the API gives us a name)
+const nameFromEmail = (email) =>
+  email
+    .split("@")[0]
+    .split(/[._-]+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(" ");
 
 export function AuthProvider({ children }) {
-  const [accounts, setAccounts] = useState(() => loadList(ACCOUNTS_KEY));
-  const [designations, setDesignations] = useState(() => loadList(DESIGNATIONS_KEY));
-  const [sessionId, setSessionId] = useState(() => localStorage.getItem(SESSION_KEY));
+  const [session, setSession] = useState(loadSession);
+  const [retryTick, setRetryTick] = useState(0);
+
+  const sessionRef = useRef(session);
+  sessionRef.current = session;
+  const refreshing = useRef(false); // rotation means only one refresh may run at a time
 
   useEffect(() => {
-    localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
-  }, [accounts]);
-
-  useEffect(() => {
-    localStorage.setItem(DESIGNATIONS_KEY, JSON.stringify(designations));
-  }, [designations]);
-
-  useEffect(() => {
-    if (sessionId) localStorage.setItem(SESSION_KEY, sessionId);
+    if (session) localStorage.setItem(SESSION_KEY, JSON.stringify(session));
     else localStorage.removeItem(SESSION_KEY);
-  }, [sessionId]);
+  }, [session]);
 
-  // A deactivated account loses access immediately
-  const account = accounts.find((a) => a.id === sessionId && a.active !== false);
-  const user = useMemo(() => (account ? publicUser(account) : null), [account]);
-  const isAdmin = user?.role === ROLES.ADMIN;
+  // ---------- Refresh ----------
 
-  // Only the CEO gets the full list of accounts
-  const users = useMemo(
-    () => (isAdmin ? accounts.map(publicUser) : []),
-    [accounts, isAdmin]
-  );
+  const refresh = async () => {
+    const current = sessionRef.current;
+    if (!current || refreshing.current) return;
+
+    refreshing.current = true;
+    try {
+      const response = await fetch(`${API_BASE_URL}/v1/auth/refresh`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refreshtoken: current.refreshToken }),
+      });
+
+      // The refresh token is no longer valid: sign out
+      if (response.status === 401 || response.status === 403) {
+        setSession(null);
+        return;
+      }
+
+      // Server trouble: keep the session and try again shortly
+      if (!response.ok) {
+        setRetryTick((n) => n + 1);
+        return;
+      }
+
+      const data = await response.json();
+      const decoded = jwtDecode(data.token);
+
+setSession((prev) =>
+  prev && {
+    ...prev,
+    token: data.token,
+    refreshToken: data.refreshtoken ?? prev.refreshToken,
+    expiresAt: data.expiresAt ?? prev.expiresAt,
+    refreshExpiresAt:
+      data.refreshExpiresAt ?? prev.refreshExpiresAt,
+    user: {
+      ...prev.user,
+      role: decoded.userType ?? "user",
+    },
+  }
+);
+    } catch {
+      setRetryTick((n) => n + 1); // offline: try again shortly
+    } finally {
+      refreshing.current = false;
+    }
+  };
+
+  // Schedule the next refresh from the real expiry time
+  useEffect(() => {
+    if (!session?.expiresAt) return;
+
+    if (session.refreshExpiresAt && new Date(session.refreshExpiresAt) < new Date()) {
+      setSession(null);
+      return;
+    }
+
+    const msLeft = new Date(session.expiresAt).getTime() - Date.now();
+    const delay = Math.max(msLeft - REFRESH_BEFORE_MS, retryTick ? RETRY_MS : 0);
+
+    const timer = setTimeout(refresh, delay);
+    return () => clearTimeout(timer);
+  }, [session?.expiresAt, retryTick]);
+
+  // Timers pause while a laptop sleeps or a tab is hidden, so check again on return
+  useEffect(() => {
+    const onVisible = () => {
+      const current = sessionRef.current;
+      if (document.visibilityState !== "visible" || !current?.expiresAt) return;
+      if (new Date(current.expiresAt).getTime() - Date.now() < REFRESH_BEFORE_MS) refresh();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   // ---------- Sign in / out ----------
 
-  const login = async ({ email, password }) => {
-    const found = accounts.find((a) => a.email === email.trim().toLowerCase());
-    const valid = found && (await hashPassword(password, found.salt)) === found.passwordHash;
-
-    if (!valid) return { ok: false, error: "Incorrect email or password." };
-    if (found.active === false) {
-      return { ok: false, error: "This account is deactivated. Contact the CEO." };
-    }
-
-    setSessionId(found.id);
-    return { ok: true };
+  // The Login page calls this with the backend's response
+  const signIn = (data, email) => {
+    const decoded = jwtDecode(data.token);
+  
+    setSession({
+      token: data.token,
+      refreshToken: data.refreshtoken,
+      expiresAt: data.expiresAt,
+      refreshExpiresAt: data.refreshExpiresAt,
+      user: {
+        id: decoded.sub ?? "",
+        email,
+        name: nameFromEmail(email),
+        role: decoded.userType ?? "user",
+        designation: "",
+        avatar: "",
+        mustChangePassword:
+          JSON.stringify(data).includes("NEW_PASSWORD_REQUIRED"),
+      },
+    });
   };
 
-  const logout = () => setSessionId(null);
+  const logout = () => setSession(null);
 
-  // ---------- One-time setup of the very first account (the CEO) ----------
+  // Will be replaced when we connect the password endpoint
+  // Used by the first-login page (temporary password) and the Settings > Profile tab
+  const changePassword = async ({ currentPassword, newPassword, confirmPassword }) => {
+    const current = sessionRef.current;
+    if (!current) return { ok: false, error: "You are not signed in." };
 
-  const setupAdmin = async ({ name, email, password }) => {
-    if (accounts.length > 0) {
-      return { ok: false, error: "Setup is already complete. Please sign in." };
+    try {
+      const response = await fetch(`${API_BASE_URL}/v1/auth/password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${current.token}`,
+        },
+        // CHECK these two field names against Swagger (PUT /auth/password)
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          return {
+            ok: false,
+            error: data.message || "Current password is incorrect, or your session has expired.",
+          };
+        }
+        return { ok: false, error: data.message || "Could not change the password. Try again." };
+      }
+
+      // Password is set: clear the "must change" flag. If the server sent fresh
+      // tokens, use them.
+      setSession((prev) =>
+        prev && {
+          ...prev,
+          token: data.token ?? prev.token,
+          refreshToken: data.refreshtoken ?? prev.refreshToken,
+          expiresAt: data.expiresAt ?? prev.expiresAt,
+          refreshExpiresAt: data.refreshExpiresAt ?? prev.refreshExpiresAt,
+          user: { ...prev.user, mustChangePassword: false },
+        }
+      );
+
+      return { ok: true };
+    } catch {
+      return { ok: false, error: "Cannot reach the server. Check that the backend is running." };
     }
-
-    const salt = makeSalt();
-    const created = {
-      id: newId(),
-      name: name.trim(),
-      email: email.trim().toLowerCase(),
-      role: ROLES.ADMIN,
-      designation: "",
-      active: true,
-      mustChangePassword: false,
-      avatar: "",
-      salt,
-      passwordHash: await hashPassword(password, salt),
-      createdAt: new Date().toISOString(),
-    };
-
-    setAccounts([created]);
-    setSessionId(created.id);
-    return { ok: true };
-  };
-
-  // ---------- Password change (any signed-in user) ----------
-
-  const changePassword = async ({ currentPassword, newPassword }) => {
-    if (!account) return { ok: false, error: "You are not signed in." };
-
-    if ((await hashPassword(currentPassword, account.salt)) !== account.passwordHash) {
-      return { ok: false, error: "Current password is incorrect." };
-    }
-    if (newPassword === currentPassword) {
-      return { ok: false, error: "Choose a password different from the current one." };
-    }
-
-    const salt = makeSalt();
-    const passwordHash = await hashPassword(newPassword, salt);
-
-    setAccounts((prev) =>
-      prev.map((a) =>
-        a.id === account.id ? { ...a, salt, passwordHash, mustChangePassword: false } : a
-      )
-    );
-    return { ok: true };
-  };
-
-  // ---------- CEO actions: designations ----------
-
-  const addDesignation = (name) => {
-    if (!isAdmin) return DENIED;
-
-    const clean = name.trim().replace(/\s+/g, " ");
-    if (!clean) return { ok: false, error: "Enter a designation name." };
-    if (clean.length > 40) return { ok: false, error: "Keep it under 40 characters." };
-    if (designations.some((d) => d.toLowerCase() === clean.toLowerCase())) {
-      return { ok: false, error: "This designation already exists." };
-    }
-
-    setDesignations((prev) => [...prev, clean]);
-    return { ok: true };
-  };
-
-  const removeDesignation = (name) => {
-    if (!isAdmin) return DENIED;
-
-    const inUse = accounts.filter((a) => a.designation === name).length;
-    if (inUse > 0) {
-      return {
-        ok: false,
-        error: `${inUse} ${inUse === 1 ? "person has" : "people have"} this designation. Change them first.`,
-      };
-    }
-
-    setDesignations((prev) => prev.filter((d) => d !== name));
-    return { ok: true };
-  };
-
-  const setUserDesignation = (id, designation) => {
-    if (!isAdmin) return DENIED;
-    if (designation && !designations.includes(designation)) {
-      return { ok: false, error: "Choose a designation from the list." };
-    }
-
-    setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, designation } : a)));
-    return { ok: true };
-  };
-
-  // ---------- CEO actions: people ----------
-
-  // Creates an account with a temporary password. Does NOT sign the new user in.
-  const createUser = async ({ name, email, designation, password }) => {
-    if (!isAdmin) return DENIED;
-
-    const cleanEmail = email.trim().toLowerCase();
-    if (accounts.some((a) => a.email === cleanEmail)) {
-      return { ok: false, error: "An account with this email already exists." };
-    }
-    if (designation && !designations.includes(designation)) {
-      return { ok: false, error: "Choose a designation from the list." };
-    }
-
-    const tempPassword = password?.trim() || generatePassword();
-    const salt = makeSalt();
-
-    const created = {
-      id: newId(),
-      name: name.trim(),
-      email: cleanEmail,
-      role: ROLES.USER,
-      designation: designation || "",
-      active: true,
-      mustChangePassword: true,
-      avatar: "",
-      salt,
-      passwordHash: await hashPassword(tempPassword, salt),
-      createdAt: new Date().toISOString(),
-    };
-
-    setAccounts((prev) => [...prev, created]);
-    return { ok: true, tempPassword };
-  };
-
-  // New temporary password; the person must change it at next sign in
-  const resetPassword = async (id) => {
-    if (!isAdmin) return DENIED;
-    if (id === account?.id) {
-      return { ok: false, error: "You cannot reset your own password here." };
-    }
-
-    const tempPassword = generatePassword();
-    const salt = makeSalt();
-    const passwordHash = await hashPassword(tempPassword, salt);
-
-    setAccounts((prev) =>
-      prev.map((a) => (a.id === id ? { ...a, salt, passwordHash, mustChangePassword: true } : a))
-    );
-    return { ok: true, tempPassword };
-  };
-
-  const setUserActive = (id, active) => {
-    if (!isAdmin) return DENIED;
-    if (id === account?.id) {
-      return { ok: false, error: "You cannot deactivate your own account." };
-    }
-
-    setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, active } : a)));
-    return { ok: true };
   };
 
   return (
     <AuthContext.Provider
       value={{
-        user,
-        users,
-        isAdmin,
-        designations,
-        hasAccounts: accounts.length > 0,
-        login,
+        user: session?.user ?? null,
+        token: session?.token ?? null,
+        isAdmin: session?.user?.role === "admin",
+        signIn,
         logout,
-        setupAdmin,
         changePassword,
-        addDesignation,
-        removeDesignation,
-        setUserDesignation,
-        createUser,
-        resetPassword,
-        setUserActive,
       }}
     >
       {children}

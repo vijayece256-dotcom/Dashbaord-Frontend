@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { titleOf } from "../../data/roles.js";
 import { formatDate } from "../../utils/format.js";
+import { PASSWORD_RULES, passwordIsValid } from "../../utils/passwordRules.js";
 import Card from "../common/Card.jsx";
 import Avatar from "../common/Avatar.jsx";
 import Input from "../common/Input.jsx";
@@ -27,13 +28,18 @@ export default function ProfileTab() {
 
     const found = {};
     if (!current) found.current = "Enter your current password.";
-    if (next.length < 8) found.next = "Use at least 8 characters.";
+    if (!passwordIsValid(next)) found.next = "Your new password does not meet all the requirements.";
+    if (next && next === current) found.next = "Choose a password different from the current one.";
     if (confirm !== next) found.confirm = "Passwords do not match.";
     setErrors(found);
     if (Object.keys(found).length) return;
 
     setBusy(true);
-    const result = await changePassword({ currentPassword: current, newPassword: next });
+    const result = await changePassword({
+      currentPassword: current,
+      newPassword: next,
+      confirmPassword: confirm,
+    });
     setBusy(false);
 
     if (!result.ok) return setErrors({ form: result.error });
@@ -60,10 +66,12 @@ export default function ProfileTab() {
             <dt>Designation</dt>
             <dd>{titleOf(user)}</dd>
           </div>
-          <div>
-            <dt>Member since</dt>
-            <dd>{formatDate(user.createdAt)}</dd>
-          </div>
+          {user.createdAt && (
+            <div>
+              <dt>Member since</dt>
+              <dd>{formatDate(user.createdAt)}</dd>
+            </div>
+          )}
         </dl>
       </Card>
 
@@ -84,7 +92,7 @@ export default function ProfileTab() {
             label="New password"
             type="password"
             autoComplete="new-password"
-            placeholder="At least 8 characters"
+            rules={PASSWORD_RULES}
             value={next}
             error={errors.next}
             onChange={(e) => {

@@ -1,0 +1,377 @@
+/* =========================================
+   EMPLOYEE DETAIL MODAL
+========================================= */
+
+.team-dialog.employee-detail-modal {
+    width: min(720px, calc(100vw - 32px));
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 24px;
+    gap: 0;
+    border-radius: 20px;
+  }
+  
+  /* Fixed header */
+  
+  .employee-detail-header {
+    flex-shrink: 0;
+    padding-bottom: 16px;
+  }
+  
+  .employee-detail-header .team-detail-head {
+    margin-bottom: 0;
+  }
+  
+  /* Scrollable body */
+  
+  .employee-detail-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 5px;
+  }
+  
+  .employee-detail-body > .team-panel,
+  .employee-detail-body > .team-detail-grid {
+    flex-shrink: 0;
+    margin: 0;
+  }
+  
+  .employee-detail-body::-webkit-scrollbar {
+    width: 5px;
+  }
+  
+  .employee-detail-body::-webkit-scrollbar-thumb {
+    background: #d9bfcc;
+    border-radius: 10px;
+  }
+  
+  .employee-detail-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  /* Section header */
+  
+  .employee-detail-section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  
+  .employee-detail-section-head h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+  }
+  
+  .employee-detail-section-head h3 svg {
+    color: #680f35;
+  }
+  
+  .employee-access-count {
+    font-size: 11px;
+    color: #918695;
+    white-space: nowrap;
+  }
+  
+  /* =========================================
+     TASK OVERVIEW
+  ========================================= */
+  
+  .employee-task-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+  }
+  
+  .employee-task-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    background: #f7f3f5;
+    border-radius: 10px;
+  }
+  
+  .employee-task-stat span {
+    font-size: 11px;
+    color: #827687;
+  }
+  
+  .employee-task-stat strong {
+    font-size: 25px;
+    font-weight: 600;
+    color: #680f35;
+  }
+  
+  .employee-task-stat.progress {
+    background: #eef3ff;
+  }
+  
+  .employee-task-stat.progress strong {
+    color: #4169c1;
+  }
+  
+  .employee-task-stat.completed {
+    background: #edf7ef;
+  }
+  
+  .employee-task-stat.completed strong {
+    color: #27803e;
+  }
+  
+  .employee-task-stat.pending {
+    background: #fff5e9;
+  }
+  
+  .employee-task-stat.pending strong {
+    color: #b67b29;
+  }
+  
+  /* =========================================
+     FEATURE PERMISSION TABLE
+  ========================================= */
+  
+  .employee-detail-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .employee-detail-permissions {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  
+  .employee-detail-permissions th {
+    padding: 12px 8px;
+    background: #f7f4f6;
+    color: #8a7d8c;
+    font-weight: 500;
+    text-align: center;
+  }
+  
+  .employee-detail-permissions th:first-child {
+    text-align: left;
+    border-radius: 8px 0 0 8px;
+  }
+  
+  .employee-detail-permissions th:last-child {
+    border-radius: 0 8px 8px 0;
+  }
+  
+  .employee-detail-permissions td {
+    padding: 13px 8px;
+    text-align: center;
+    border-bottom: 1px solid #eee7ec;
+  }
+  
+  .employee-detail-permissions td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: #332b38;
+  }
+  
+  .employee-detail-permissions tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .employee-permission-allowed,
+  .employee-permission-denied {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+  }
+  
+  .employee-permission-allowed {
+    background: #e7f5e9;
+    color: #26813c;
+  }
+  
+  .employee-permission-denied {
+    background: #f4eff2;
+    color: #a194a2;
+  }
+  
+  .employee-permission-na {
+    color: #bdb4bf;
+  }
+  
+  /* Permission legend */
+  
+  .employee-permission-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-top: 12px;
+    margin-top: 5px;
+    border-top: 1px solid #eee7ec;
+  }
+  
+  .employee-permission-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: #918695;
+  }
+  
+  .employee-permission-legend span:first-child svg {
+    color: #26813c;
+  }
+  
+  /* =========================================
+     BOARD ACCESS
+  ========================================= */
+  
+  .employee-detail-board-list {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .employee-detail-board {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee7ec;
+  }
+  
+  .employee-detail-board:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  .employee-detail-board-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .employee-detail-board-name strong {
+    font-size: 12px;
+    font-weight: 500;
+  }
+  
+  .employee-detail-board-icon {
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: #f7e8ef;
+    color: #680f35;
+  }
+  
+  .employee-board-status {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  
+  .employee-board-status.allowed {
+    background: #e7f5e9;
+    color: #26813c;
+  }
+  
+  .employee-board-status.restricted {
+    background: #f2eff2;
+    color: #948795;
+  }
+  
+  /* =========================================
+     ASSIGNED TASK LIST
+  ========================================= */
+  
+  .employee-assigned-task-list {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .employee-assigned-task {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee7ec;
+  }
+  
+  .employee-assigned-task:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  
+  .employee-assigned-task > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+  
+  .employee-assigned-task strong {
+    font-size: 12px;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+  
+  .employee-assigned-task small {
+    font-size: 11px;
+    color: #918695;
+  }
+  
+  .employee-task-status {
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: #f7e8ef;
+    color: #680f35;
+    text-transform: capitalize;
+    white-space: nowrap;
+  }
+  
+  /* Fixed footer */
+  
+  .employee-detail-footer {
+    flex-shrink: 0;
+    padding-top: 16px;
+    margin-top: 12px;
+    border-top: 1px solid #eee7ec;
+  }
+  
+  /* Responsive */
+  
+  @media (max-width: 600px) {
+    .team-dialog.employee-detail-modal {
+      padding: 16px;
+    }
+  
+    .employee-task-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  
+    .employee-detail-section-head {
+      flex-wrap: wrap;
+    }
+  
+    .employee-detail-permissions {
+      min-width: 420px;
+    }
+  
+    .employee-detail-body .team-detail-grid {
+      grid-template-columns: 1fr;
+    }
+  }

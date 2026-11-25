@@ -132,7 +132,7 @@ function loadInitialData() {
 // -----------------------------------------
 
 export function BoardsProvider({ children }) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const initialData = useRef(null);
 
   if (initialData.current === null) {
@@ -146,6 +146,39 @@ export function BoardsProvider({ children }) {
   const taskCounter = useRef(
     initialData.current.counter
   );
+
+  // -----------------------------------------
+// ADD BOARD
+// -----------------------------------------
+
+const addBoard = (name) => {
+  const board = {
+    id: newId(),
+    name: name.trim(),
+    tasks: [],
+  };
+
+  setBoards((previous) => [
+    ...previous,
+    board,
+  ]);
+
+  return board;
+};
+
+// -----------------------------------------
+// DELETE BOARD - ADMIN ONLY
+// -----------------------------------------
+
+const deleteBoard = (boardId) => {
+  if (!isAdmin) {
+    throw new Error("Only administrators can delete boards.");
+  }
+
+  setBoards((previous) =>
+    previous.filter((board) => board.id !== boardId)
+  );
+};
 
   // -----------------------------------------
   // SAVE DATA TO LOCAL STORAGE
@@ -202,20 +235,7 @@ export function BoardsProvider({ children }) {
   // ADD BOARD
   // -----------------------------------------
 
-  const addBoard = (name) => {
-    const board = {
-      id: newId(),
-      name: name.trim(),
-      tasks: [],
-    };
-
-    setBoards((previous) => [
-      ...previous,
-      board,
-    ]);
-
-    return board;
-  };
+  
 
   // -----------------------------------------
   // UPDATE BOARD TASKS
@@ -399,6 +419,7 @@ export function BoardsProvider({ children }) {
       value={{
         boards,
         addBoard,
+        deleteBoard, // Newly added
         addTask,
         updateTask,
         moveTask,

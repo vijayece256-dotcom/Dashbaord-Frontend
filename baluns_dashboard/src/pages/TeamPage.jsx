@@ -1,123 +1,231 @@
-import { useMemo, useState } from 'react';
-import { Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEmployees } from '../context/EmployeesContext.jsx';
-import { useProjects } from '../context/ProjectsContext.jsx';
-import { useBoards } from '../context/BoardsContext.jsx';
-import Dropdown from '../components/common/Dropdown.jsx';
-import EmployeeTable from '../components/team/EmployeeTable.jsx';
-import EmployeeDetailModal from '../components/team/EmployeeDetailModal.jsx';
-import EmployeeFormModal from '../components/team/EmployeeFormModal.jsx';
-import './TeamPage.css';
+import { useMemo, useState } from "react";
+import {
+  Plus,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+
+import { useAuth } from "../context/AuthContext.jsx";
+import { useEmployees } from "../context/EmployeesContext.jsx";
+import { useProjects } from "../context/ProjectsContext.jsx";
+import { useBoards } from "../context/BoardsContext.jsx";
+
+import Dropdown from "../components/common/Dropdown.jsx";
+import EmployeeTable from "../components/team/EmployeeTable.jsx";
+import EmployeeDetailModal from "../components/team/EmployeeDetailModal.jsx";
+import EmployeeFormModal from "../components/team/EmployeeFormModal.jsx";
+
+import "./TeamPage.css";
 
 const PAGE_SIZE = 8;
 
+const getId = (item) => item?._id ?? item?.id ?? "";
+
+const normalize = (value) =>
+  String(value ?? "").trim().toLowerCase();
+
 export default function TeamPage() {
-  const { employees, saveEmployee, removeEmployee } = useEmployees();
+  // =====================================
+  // CONTEXT
+  // =====================================
+
+  const { isAdmin } = useAuth();
+
+  const {
+    employees = [],
+    saveEmployee,
+    removeEmployee,
+  } = useEmployees();
+
   const { projects = [] } = useProjects();
   const { boards = [] } = useBoards();
 
-  const [query, setQuery] = useState('');
-  const [team, setTeam] = useState('');
-  const [role, setRole] = useState('');
-  const [project, setProject] = useState('');
+  // Temporary until registered accounts API is available
+  const [accounts] = useState([]);
+
+  // =====================================
+  // STATE
+  // =====================================
+
+  const [query, setQuery] = useState("");
+  const [team, setTeam] = useState("");
+  const [role, setRole] = useState("");
+  const [project, setProject] = useState("");
+
   const [page, setPage] = useState(1);
+
   const [selected, setSelected] = useState(null);
   const [editing, setEditing] = useState(undefined);
   const [deleting, setDeleting] = useState(null);
 
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  // =====================================
+  // FILTER OPTIONS
+  // =====================================
+
   const opts = (title, values) => [
-    { id: '', title },
-    ...values.map((v) => ({ id: String(v), title: String(v) })),
+    { id: "", title },
+    ...values.map((v) => ({
+      id: String(v),
+      title: String(v),
+    })),
   ];
 
   const teamOptions = opts(
-    'All Departments',
-    [...new Set(employees.map((e) => e.team).filter(Boolean))].sort()
+    "All Departments",
+    [
+      ...new Set(
+        employees.map((e) => e.team).filter(Boolean)
+      ),
+    ].sort()
   );
 
   const roleOptions = opts(
-    'All Roles',
-    [...new Set(employees.map((e) => e.role).filter(Boolean))].sort()
+    "All Roles",
+    [
+      ...new Set(
+        employees.map((e) => e.role).filter(Boolean)
+      ),
+    ].sort()
   );
 
   const projectOptions = [
-    { id: '', title: 'All Projects' },
-    ...projects.map((p) => ({ id: String(p.id), title: p.name })),
+    { id: "", title: "All Projects" },
+
+    ...projects.map((p) => ({
+      id: String(getId(p)),
+      title: p.name,
+    })),
   ];
+
+  // =====================================
+  // FILTER EMPLOYEES
+  // =====================================
 
   const filtered = useMemo(() => {
     const selectedProject = projects.find(
-      (p) => String(p.id) === String(project)
+      (p) => String(getId(p)) === String(project)
     );
 
-    // Collect tasks from all boards
     const allTasks = boards.flatMap((board) =>
       (board.tasks || []).map((task) => ({
         ...task,
-        boardId: board.id,
+        boardId: getId(board),
       }))
     );
 
     return employees.filter((employee) => {
-      // SEARCH
+      // Search filter
+
       const searchText = [
         employee.name,
-        employee.empId || employee.id,
+        employee.empId || getId(employee),
         employee.email,
         employee.role,
         employee.team,
       ]
         .filter(Boolean)
-        .join(' ')
+        .join(" ")
         .toLowerCase();
 
-      const matchesSearch = searchText.includes(query.trim().toLowerCase());
+      const matchesSearch = searchText.includes(
+        normalize(query)
+      );
 
-      // DEPARTMENT
-      const matchesTeam = !team || employee.team === team;
+      // Department filter
 
-      // ROLE
-      const matchesRole = !role || employee.role === role;
+      const matchesTeam =
+        !team || employee.team === team;
 
-      // PROJECT
+      // Designation filter
+
+      const matchesRole =
+        !role || employee.role === role;
+
+      // Project filter
+
       let matchesProject = !project;
 
       if (project && selectedProject) {
-        // Employee directly belongs to project
+        const selectedProjectId = String(
+          getId(selectedProject)
+        );
+
+        // Direct project assignment
+
         const directMatch =
-          String(employee.projectId || '') === String(selectedProject.id) ||
+          String(employee.projectId || "") ===
+            selectedProjectId ||
           employee.project === selectedProject.name;
 
-        // Employee assigned to any task in project
+        // Task-based project assignment
+
         const taskMatch = allTasks.some((task) => {
           const sameProject =
-            String(task.projectId || '') === String(selectedProject.id) ||
-            (!task.projectId && task.project === selectedProject.name);
+            String(task.projectId || "") ===
+              selectedProjectId ||
+            (!task.projectId &&
+              task.project === selectedProject.name);
+
+          if (!sameProject) return false;
 
           const assignee = task.assignee;
 
-          const sameEmployee =
-            typeof assignee === 'string'
-              ? assignee.trim().toLowerCase() ===
-                employee.name.trim().toLowerCase()
-              : assignee &&
-                (String(assignee.id || assignee.empId) ===
-                  String(employee.id || employee.empId) ||
-                  assignee.name?.trim().toLowerCase() ===
-                    employee.name.trim().toLowerCase());
+          if (!assignee) return false;
 
-          return sameProject && sameEmployee;
+          const employeeName = normalize(employee.name);
+
+          if (typeof assignee === "string") {
+            return (
+              !!employeeName &&
+              normalize(assignee) === employeeName
+            );
+          }
+
+          const assigneeId =
+            getId(assignee) || assignee.empId;
+
+          const employeeId =
+            getId(employee) || employee.empId;
+
+          const sameId =
+            !!assigneeId &&
+            !!employeeId &&
+            String(assigneeId) === String(employeeId);
+
+          const sameName =
+            !!employeeName &&
+            normalize(assignee.name) === employeeName;
+
+          return sameId || sameName;
         });
 
         matchesProject = directMatch || taskMatch;
       }
 
-      return matchesSearch && matchesTeam && matchesRole && matchesProject;
+      return (
+        matchesSearch &&
+        matchesTeam &&
+        matchesRole &&
+        matchesProject
+      );
     });
   }, [employees, projects, boards, query, team, role, project]);
 
-  const pages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  // =====================================
+  // PAGINATION
+  // =====================================
+
+  const pages = Math.max(
+    1,
+    Math.ceil(filtered.length / PAGE_SIZE)
+  );
+
   const currentPage = Math.min(page, pages);
+
   const visible = filtered.slice(
     (currentPage - 1) * PAGE_SIZE,
     currentPage * PAGE_SIZE
@@ -128,41 +236,136 @@ export default function TeamPage() {
     setPage(1);
   };
 
-  const edit = (e) => {
-    setSelected(null);
-    setEditing(e);
+  // =====================================
+  // EMPLOYEE ACTIONS
+  // =====================================
+
+  const handleAdd = () => {
+    if (!isAdmin) return;
+
+    setEditing(null);
   };
+
+  const handleEdit = (employee) => {
+    if (!isAdmin) return;
+
+    setSelected(null);
+    setEditing(employee);
+  };
+
+  const handleDeleteRequest = (employee) => {
+    if (!isAdmin) return;
+
+    setDeleteError("");
+    setDeleting(employee);
+  };
+
+  // Save employee
+
+  const handleSave = async (data) => {
+    if (!isAdmin) {
+      return {
+        ok: false,
+        error: "Administrator access is required.",
+      };
+    }
+
+    try {
+      const result = await saveEmployee(data);
+
+      if (result === false || result?.ok === false) {
+        return {
+          ok: false,
+          error: result?.error || "Unable to save employee.",
+        };
+      }
+
+      setEditing(undefined);
+
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        error:
+          error.message || "Unable to save employee.",
+      };
+    }
+  };
+
+  // Delete employee
+
+  const handleDelete = async () => {
+    if (!isAdmin || !deleting || deleteBusy) return;
+
+    setDeleteBusy(true);
+    setDeleteError("");
+
+    try {
+      const result = await removeEmployee(getId(deleting));
+
+      if (result === false || result?.ok === false) {
+        throw new Error(
+          result?.error || "Unable to delete employee."
+        );
+      }
+
+      setDeleting(null);
+    } catch (error) {
+      setDeleteError(
+        error.message || "Unable to delete employee."
+      );
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
+  // =====================================
+  // UI
+  // =====================================
 
   return (
     <div className="team-page">
+
       {/* PAGE HEADER */}
+
       <div className="team-heading">
         <div>
-          <h1>Team</h1>
+          <h1>Employees Details</h1>
+
           <p>
-            View all employees, roles, departments, and project assignments.
+            Manage employees, designations, departments,
+            project assignments and feature access.
           </p>
         </div>
 
-        <button
-          className="team-btn primary"
-          onClick={() => setEditing(null)}
-        >
-          <Plus size={17} />
-          Add Employee
-        </button>
+        {isAdmin && (
+          <button
+            className="team-btn primary"
+            onClick={handleAdd}
+          >
+            <Plus size={17} />
+            Add Employee
+          </button>
+        )}
       </div>
 
-      {/* MAIN WHITE CARD */}
+      {/* MAIN CONTENT */}
+
       <div className="team-content-card">
-        {/* FILTERS - STAY FIXED */}
+
+        {/* FILTER TOOLBAR */}
+
         <div className="team-toolbar">
+
           <div className="team-search">
             <Search size={17} />
+
             <input
               placeholder="Search employees"
               value={query}
-              onChange={(ev) => change(setQuery)(ev.target.value)}
+              onChange={(ev) =>
+                change(setQuery)(ev.target.value)
+              }
             />
           </div>
 
@@ -183,30 +386,42 @@ export default function TeamPage() {
             options={projectOptions}
             onChange={change(setProject)}
           />
+
         </div>
 
-        {/* ONLY TABLE SCROLLS */}
+        {/* EMPLOYEE TABLE */}
+
         <div className="team-table-scroll">
           <EmployeeTable
             employees={visible}
             projects={projects}
+            isAdmin={isAdmin}
             onOpen={setSelected}
-            onEdit={edit}
-            onDelete={setDeleting}
+            onEdit={handleEdit}
+            onDelete={handleDeleteRequest}
           />
         </div>
 
-        {/* PAGINATION - STAYS FIXED */}
+        {/* PAGINATION */}
+
         <div className="team-footer">
           <span>
-            Showing{' '}
-            {filtered.length ? (currentPage - 1) * PAGE_SIZE + 1 : 0}–
-            {Math.min(currentPage * PAGE_SIZE, filtered.length)} of{' '}
-            {filtered.length} employees
+            Showing{" "}
+            {filtered.length
+              ? (currentPage - 1) * PAGE_SIZE + 1
+              : 0}
+            –
+            {Math.min(
+              currentPage * PAGE_SIZE,
+              filtered.length
+            )}{" "}
+            of {filtered.length} employees
           </span>
 
           <div className="team-pagination">
+
             <button
+              aria-label="Previous page"
               disabled={currentPage === 1}
               onClick={() => setPage(currentPage - 1)}
             >
@@ -216,7 +431,9 @@ export default function TeamPage() {
             {Array.from({ length: pages }, (_, i) => (
               <button
                 key={i}
-                className={currentPage === i + 1 ? 'active' : ''}
+                className={
+                  currentPage === i + 1 ? "active" : ""
+                }
                 onClick={() => setPage(i + 1)}
               >
                 {i + 1}
@@ -224,64 +441,86 @@ export default function TeamPage() {
             ))}
 
             <button
+              aria-label="Next page"
               disabled={currentPage === pages}
               onClick={() => setPage(currentPage + 1)}
             >
               <ChevronRight size={16} />
             </button>
+
           </div>
         </div>
       </div>
 
-      {/* EMPLOYEE DETAILS */}
+      {/* EMPLOYEE DETAILS MODAL */}
+
       {selected && (
         <EmployeeDetailModal
           employee={
-            employees.find((e) => e.id === selected.id) || selected
+            employees.find(
+              (e) =>
+                String(getId(e)) ===
+                String(getId(selected))
+            ) || selected
           }
           projects={projects}
           boards={boards}
+          isAdmin={isAdmin}
           onClose={() => setSelected(null)}
-          onEdit={edit}
+          onEdit={handleEdit}
         />
       )}
 
-      {/* ADD / EDIT EMPLOYEE */}
-      {editing !== undefined && (
+      {/* ADD / EDIT EMPLOYEE MODAL */}
+
+      {isAdmin && editing !== undefined && (
         <EmployeeFormModal
           employee={editing}
+          employees={employees}
+          accounts={accounts}
           boards={boards}
           projects={projects}
           onClose={() => setEditing(undefined)}
-          onSave={(data) => {
-            saveEmployee(data);
-            setEditing(undefined);
-          }}
+          onSave={handleSave}
         />
       )}
 
-      {/* DELETE CONFIRMATION */}
-      {deleting && (
+      {/* DELETE CONFIRMATION MODAL */}
+
+      {isAdmin && deleting && (
         <div
           className="team-overlay"
-          onMouseDown={() => setDeleting(null)}
+          onMouseDown={() => {
+            if (!deleteBusy) setDeleting(null);
+          }}
         >
           <div
             className="team-dialog team-confirm"
             onMouseDown={(ev) => ev.stopPropagation()}
             role="alertdialog"
             aria-modal="true"
+            aria-labelledby="delete-employee-title"
           >
-            <h2>Delete employee?</h2>
+            <h2 id="delete-employee-title">
+              Delete employee?
+            </h2>
 
             <p>
-              Remove <strong>{deleting.name}</strong> from the employee
-              directory? Existing tasks will remain unchanged.
+              Remove <strong>{deleting.name}</strong>{" "}
+              from the employee directory?
             </p>
 
+            {deleteError && (
+              <p className="team-error" role="alert">
+                {deleteError}
+              </p>
+            )}
+
             <div className="team-dialog-actions">
+
               <button
                 className="team-btn secondary"
+                disabled={deleteBusy}
                 onClick={() => setDeleting(null)}
               >
                 Cancel
@@ -289,13 +528,14 @@ export default function TeamPage() {
 
               <button
                 className="team-btn danger"
-                onClick={() => {
-                  removeEmployee(deleting.id);
-                  setDeleting(null);
-                }}
+                disabled={deleteBusy}
+                onClick={handleDelete}
               >
-                Delete employee
+                {deleteBusy
+                  ? "Deleting..."
+                  : "Delete employee"}
               </button>
+
             </div>
           </div>
         </div>

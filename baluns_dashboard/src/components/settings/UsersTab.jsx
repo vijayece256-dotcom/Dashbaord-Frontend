@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { API_BASE_URL } from "../../config/env.js";
 import { Plus, KeyRound, UserX, UserCheck } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { ROLES, DEFAULT_TITLE, titleOf } from "../../data/roles.js";
@@ -14,33 +15,133 @@ import CredentialsModal from "./CredentialsModal.jsx";
 export default function UsersTab() {
   const {
     user,
-    users,
-    designations,
+    token,
+    isAdmin,
+    designations = [],
     createUser,
     resetPassword,
     setUserDesignation,
     setUserActive,
   } = useAuth();
+  
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [showAdd, setShowAdd] = useState(false);
   const [credentials, setCredentials] = useState(null);
   const [notice, setNotice] = useState("");
 
   const showError = (result) => setNotice(result.ok ? "" : result.error);
-
-  const handleCreate = async (data) => {
-    const result = await createUser(data);
-    if (result.ok) {
-      setShowAdd(false);
-      setNotice("");
-      setCredentials({
-        title: "User created",
-        name: data.name.trim(),
-        email: data.email.trim().toLowerCase(),
-        password: result.tempPassword,
-      });
+  useEffect(() => {
+    if (!isAdmin || !token) {
+      setUsers([]);
+      setLoading(false);
+      return;
     }
-    return result; // the modal shows the error if there is one
+  
+    const controller = new AbortController();
+  
+    const fetchUsers = async () => {
+      setLoading(true);
+      setNotice("");
+  
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/v1/employee`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            signal: controller.signal,
+          }
+        );
+  
+        if (!response.ok) {
+          throw new Error(
+            `Failed to fetch employees (${response.status})`
+          );
+        }
+  
+        const data = await response.json();
+  
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid employee response.");
+        }
+  
+        const formattedUsers = data.map((employee) => ({
+          id: employee._id,
+          name:
+            `${employee.firstname ?? ""} ${employee.lastname ?? ""}`.trim()
+            || employee.username,
+          username: employee.username,
+          email: employee.emailaddress,
+          phone: employee.phonenumber,
+          active: employee.isActive,
+          mustChangePassword:
+            employee.isPermanentPassword === false,
+          designation:
+            employee.designation?.designationName ?? "",
+          designationId:
+            employee.designation?._id ?? "",
+          team: employee.team?.teamName ?? "",
+          teamId: employee.team?._id ?? "",
+          createdAt: employee.createdAt,
+          updatedAt: employee.updatedAt,
+          role: employee.userType ?? employee.role,
+        }));
+  
+        setUsers(formattedUsers);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setNotice(error.message);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+  
+    fetchUsers();
+  
+    return () => controller.abort();
+  }, [token, isAdmin]);
+  const handleCreate = async (data) => {
+    if (typeof createUser !== "function") {
+      return {
+        ok: false,
+        error: "Create account API is not connected.",
+      };
+    }
+  
+    try {
+      const result = await createUser(data);
+  
+      if (result.ok) {
+        setShowAdd(false);
+        setNotice("");
+  
+        if (result.tempPassword) {
+          setCredentials({
+            title: "Account created successfully",
+            name: data.email,
+            email: data.email,
+            password: result.tempPassword,
+          });
+        }
+  
+        // Refresh the user accounts list here.
+      }
+  
+      return result;
+    } catch (error) {
+      return {
+        ok: false,
+        error: error.message || "Unable to create account.",
+      };
+    }
   };
 
   const handleReset = async (person) => {
@@ -138,10 +239,18 @@ export default function UsersTab() {
     <>
       <Card
         title={`Users (${users.length})`}
-        action={<Button icon={Plus} size="sm" onClick={() => setShowAdd(true)}>Add user</Button>}
+        action={<Button icon={Plus} size="sm" onClick={() => setShowAdd(true)}>Create account</Button>}
       >
         {notice && <p className="settings-notice" role="alert">{notice}</p>}
-        <DataTable columns={columns} rows={users} emptyText="No users yet." />
+        {loading ? (
+  <p>Loading employees...</p>
+) : (
+  <DataTable
+    columns={columns}
+    rows={users}
+    emptyText="No users yet."
+  />
+)}
       </Card>
 
       {showAdd && <AddUserModal onCreate={handleCreate} onClose={() => setShowAdd(false)} />}

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import PageHeader from "../components/common/PageHeader.jsx";
-import Tabs from "../components/common/Tabs.jsx";
 import ProfileTab from "../components/settings/ProfileTab.jsx";
 import UsersTab from "../components/settings/UsersTab.jsx";
 import DesignationsTab from "../components/settings/DesignationsTab.jsx";
@@ -10,32 +9,74 @@ import "./Settings.css";
 export default function Settings() {
   const { isAdmin } = useAuth();
 
-  // Everyone sees Profile. Only the CEO sees the other two.
   const tabs = [
     { id: "profile", label: "Profile" },
     ...(isAdmin
       ? [
           { id: "users", label: "Users" },
-          { id: "designations", label: "Designations" },
+          {
+            id: "designations",
+            label: "Teams & Designations",
+          },
         ]
       : []),
   ];
 
   const [tab, setTab] = useState("profile");
-  const active = tabs.some((t) => t.id === tab) ? tab : "profile";
+
+  const active = tabs.some((t) => t.id === tab)
+    ? tab
+    : "profile";
 
   return (
     <div className="settings-page">
-      <PageHeader
-        title="Settings"
-        subtitle={isAdmin ? "Manage your account, your team and their designations." : "Manage your account."}
-      />
+      {/* Fixed header */}
+      <div className="settings-header">
+        <PageHeader
+          title="Settings"
+          subtitle="Manage your account and organisation settings."
+        />
+      </div>
 
-      {tabs.length > 1 && <Tabs tabs={tabs} value={active} onChange={setTab} />}
+      {/* Fixed tab navigation */}
+      <div className="settings-tabs">
+        <div className="settings-tab-group">
+          {tabs.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`settings-tab-button ${
+                active === item.id
+                  ? "settings-tab-active"
+                  : ""
+              }`}
+              aria-pressed={active === item.id}
+              onClick={() => setTab(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {active === "profile" && <ProfileTab />}
-      {active === "users" && isAdmin && <UsersTab />}
-      {active === "designations" && isAdmin && <DesignationsTab />}
+      {/* Scrollable content */}
+      <div
+        className={`settings-content ${
+          active === "designations"
+            ? "settings-content-fixed"
+            : ""
+        }`}
+      >
+        {active === "profile" && <ProfileTab />}
+
+        {active === "users" && isAdmin && (
+          <UsersTab />
+        )}
+
+        {active === "designations" && isAdmin && (
+          <DesignationsTab />
+        )}
+      </div>
     </div>
   );
 }
