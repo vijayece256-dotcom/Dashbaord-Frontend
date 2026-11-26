@@ -15,8 +15,8 @@ import {
   taskActivity,
 } from "../../utils/projectTasks.js";
 import "./ProjectModal.css";
-
-const TABS = ["Overview", "Tasks", "Activity History"];
+import { Upload, FileUp } from "lucide-react";
+const TABS = ["Overview", "Tasks", "Activity History","Project Files",];
 
 const initials = (name = "") =>
   String(name)
@@ -60,7 +60,7 @@ export default function ProjectModal({
   onClose,
 }) {
   const { projects, updateProject } = useProjects();
-
+  const [showUploadSoon, setShowUploadSoon] = useState(false);
   const liveProject =
     projects?.find(
       (item) => String(item.id) === String(project?.id)
@@ -814,6 +814,60 @@ export default function ProjectModal({
             </section>
           </div>
         )}
+        {/* PROJECT FILES TAB */}
+
+{tab === "Project Files" && (
+  <div className="pd-body">
+    <section className="pd-card pd-wide">
+      <div className="pd-card-head">
+        <div>
+          <h4>Project files</h4>
+          <p className="pd-hint">
+            Manage and access files related to this project.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="pd-upload-btn"
+          onClick={() => setShowUploadSoon(true)}
+        >
+          <Upload size={15} />
+          Upload files
+        </button>
+      </div>
+
+      {showUploadSoon ? (
+        <div className="pd-soon" role="status">
+          <FileUp size={22} />
+
+          <div>
+            <strong>Coming soon</strong>
+            <p>
+              File uploads for each project will be available soon.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="pd-link"
+            onClick={() => setShowUploadSoon(false)}
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : (
+        <div className="pd-empty pd-empty--block">
+          <FileUp size={28} />
+          <p>No files uploaded yet.</p>
+          <span>
+            Upload project documents, images and other files here.
+          </span>
+        </div>
+      )}
+    </section>
+  </div>
+)}
       </div>
 
       {/* FOOTER */}

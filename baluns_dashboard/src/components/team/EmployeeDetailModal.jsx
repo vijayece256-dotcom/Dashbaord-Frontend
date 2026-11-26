@@ -47,7 +47,8 @@ const ACTIONS = ["view", "create", "edit", "delete"];
 
 const getId = (item) =>
   item?._id ?? item?.id ?? "";
-
+const getEmployeeCode = (item) =>
+  item?.employeeCode ?? item?.empId ?? item?.employee_code ?? "";
 const normalize = (value) =>
   String(value ?? "").trim().toLowerCase();
 
@@ -244,7 +245,7 @@ export default function EmployeeDetailModal({
               <h2>{name}</h2>
 
               <p>
-                {e.empId || getId(e)} · {role}
+              {getEmployeeCode(e) || "No employee ID"} · {role}
               </p>
 
               <small>
@@ -274,7 +275,7 @@ export default function EmployeeDetailModal({
             <div className="team-facts">
               <div>
                 <span>Employee ID</span>
-                <strong>{e.empId || getId(e)}</strong>
+                <strong>{getEmployeeCode(e) || "—"}</strong>
               </div>
 
               <div>

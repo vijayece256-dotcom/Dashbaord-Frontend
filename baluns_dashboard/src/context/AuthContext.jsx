@@ -123,21 +123,28 @@ setSession((prev) =>
   // The Login page calls this with the backend's response
   const signIn = (data, email) => {
     const decoded = jwtDecode(data.token);
-  
+    const profile = data.profile ?? {};
+    const firstName = profile.firstname ?? profile.firstName ?? "";
+    const lastName = profile.lastname ?? profile.lastName ?? "";
+
     setSession({
       token: data.token,
       refreshToken: data.refreshtoken,
       expiresAt: data.expiresAt,
       refreshExpiresAt: data.refreshExpiresAt,
       user: {
-        id: decoded.sub ?? "",
-        email,
-        name: nameFromEmail(email),
-        role: decoded.userType ?? "user",
-        designation: "",
+        id: data.employeeId ?? decoded.sub ?? "",
+        email: profile.email ?? email,
+        name: `${firstName} ${lastName}`.trim() || nameFromEmail(email),
+        role: profile.userType ?? decoded.userType ?? "user",
+        featureAccess: Array.isArray(profile.featureAccess)
+          ? profile.featureAccess
+          : [],
+        designation: profile.designation?.name ?? "",
+        team: profile.team?.name ?? "",
         avatar: "",
         mustChangePassword:
-          JSON.stringify(data).includes("NEW_PASSWORD_REQUIRED"),
+          data.message === "NEW_PASSWORD_REQUIRED",
       },
     });
   };

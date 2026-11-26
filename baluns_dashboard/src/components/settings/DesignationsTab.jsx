@@ -72,36 +72,57 @@ export default function DesignationsTab() {
   };
 
   // Handle array responses
-  const getArray = (response) => {
-    if (Array.isArray(response)) return response;
-    if (Array.isArray(response?.data)) return response.data;
+ // Handle different API response structures
+const getArray = (response, key) => {
+  if (Array.isArray(response)) return response;
 
-    throw new Error("Unexpected API response structure");
-  };
+  if (Array.isArray(response?.data)) return response.data;
 
+  if (Array.isArray(response?.[key])) return response[key];
+
+  if (Array.isArray(response?.data?.[key])) {
+    return response.data[key];
+  }
+
+  // Employee list is optional for loading the teams/designations screen.
+  return [];
+};
   // Load teams, designations and employees
-  const loadData = async () => {
-    setLoading(true);
-    setFetchError("");
+  // Load teams, designations and employees
+// Load teams, designations and employees
+const loadData = async () => {
+  setLoading(true);
+  setFetchError("");
 
-    try {
-      const [teamData, designationData, employeeData] =
-        await Promise.all([
-          request("/v1/team"),
-          request("/v1/team/designation"),
-          request("/v1/employee"),
-        ]);
+  try {
+    const [teamDesignationData, employeeData] = await Promise.all([
+      request("/v1/team-designation/?isAnalytics=true"),
+      request("/v1/employee"),
+    ]);
 
-      setTeams(getArray(teamData));
-      setDesignations(getArray(designationData));
-      setEmployees(getArray(employeeData));
-    } catch (err) {
-      setFetchError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+    // New team-designation API response
+    const teamList = Array.isArray(teamDesignationData?.teams)
+      ? teamDesignationData.teams
+      : [];
 
+    const designationList = Array.isArray(
+      teamDesignationData?.designations
+    )
+      ? teamDesignationData.designations
+      : [];
+
+    // Employee API response
+    const employeeList = getArray(employeeData, "employees");
+
+    setTeams(teamList);
+    setDesignations(designationList);
+    setEmployees(employeeList);
+  } catch (err) {
+    setFetchError(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
   // Initial API loading
   useEffect(() => {
     if (!token) {
@@ -116,21 +137,17 @@ export default function DesignationsTab() {
     loadData();
   }, [token]);
 
-  // Count employees assigned to a designation
-  const countEmployees = (designationId) =>
-    employees.filter(
-      (employee) =>
-        employee.designation?._id === designationId ||
-        employee.designation === designationId
-    ).length;
+ 
 
   // Get designations belonging to a team
-  const getDesignations = (id) =>
-    designations.filter(
-      (designation) =>
-        (designation.team?._id || designation.teamId) === id
-    );
-
+  // Get designations belonging to a team
+const getDesignations = (id) =>
+  designations.filter(
+    (designation) =>
+      designation.teamId === id ||
+      designation.team?._id === id ||
+      designation.team === id
+  );
   // Create designation or team + designation
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -182,7 +199,7 @@ export default function DesignationsTab() {
 
         setSuccess("Designation created successfully.");
       } else {
-        const response = await request("/v1/team-designation", {
+        const response = await request("/v1/team-designation/?isAnalytics=true", {
           method: "POST",
           body: JSON.stringify({
             teamName: trimmedTeamName,
@@ -357,12 +374,12 @@ export default function DesignationsTab() {
                 <option value="">Select a team</option>
 
                 {teams
-                  .filter((team) => team.isActive !== false)
-                  .map((team) => (
-                    <option key={team._id} value={team._id}>
-                      {team.teamName}
-                    </option>
-                  ))}
+  .filter((team) => team.isActive !== false)
+  .map((team) => (
+    <option key={team._id} value={team._id}>
+      {team.teamName || team.name}
+    </option>
+  ))}
               </select>
             ) : (
               <input
@@ -430,7 +447,7 @@ export default function DesignationsTab() {
       ) : (
         teams.map((team) => {
           const roles = getDesignations(team._id);
-
+          console.log("Designations for team:", team.teamName || team.name, roles);
           return (
             <div className="td-team-card" key={team._id}>
 
@@ -441,7 +458,7 @@ export default function DesignationsTab() {
                 </div>
 
                 <div className="td-team-info">
-                  <h3>{team.teamName}</h3>
+                <h3>{team.teamName || team.name}</h3>
                   <span>{roles.length} designations</span>
                 </div>
 
@@ -498,7 +515,7 @@ export default function DesignationsTab() {
                         <tr key={role._id}>
                           <td>{role.name}</td>
 
-                          <td>{countEmployees(role._id)}</td>
+                          <td>{role.totalEmployeeCount}</td>
 
                           <td>
                             <span

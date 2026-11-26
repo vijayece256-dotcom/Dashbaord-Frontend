@@ -517,6 +517,41 @@
     max-width: 300px;
   }
   
+.employee-checkbox {
+  display: grid;
+  grid-template-columns: 18px auto;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 6px;
+  margin-top: 18px;
+  width: fit-content;
+  max-width: 100%;
+  cursor: pointer;
+}
+
+.employee-checkbox input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #680f35;
+  cursor: pointer;
+}
+
+.employee-checkbox span {
+  font-size: 13px;
+  font-weight: 500;
+  color: #302634;
+}
+
+.employee-checkbox small {
+  grid-column: 1 / -1;
+  color: #918798;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-left: 0;
+}
+
+  
   @media (max-width: 600px) {
     .employee-toggle-card {
       padding: 12px;

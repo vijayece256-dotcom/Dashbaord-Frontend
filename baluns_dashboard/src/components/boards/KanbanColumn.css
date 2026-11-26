@@ -1,50 +1,154 @@
 .kanban-col {
-    background: var(--surface);
-    border: 1.5px solid #e2e2e6;
-    border-radius: 18px;
-    padding: 14px;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-  }
-  
-  .kanban-col-over {
-    border-color: var(--burgundy-300);
-    background: var(--burgundy-100);
-  }
-  
-  .kanban-col-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  
-  .kanban-col-head h3 { font-size: 14px; font-weight: 600; }
-  
-  .kanban-dot { width: 10px; height: 10px; border-radius: 50%; }
-  
-  .kanban-count {
-    margin-left: auto;
-    font-size: 12px;
-    background: var(--grey-100);
-    padding: 2px 9px;
-    border-radius: 999px;
-    color: var(--grey-500);
-  }
-  
-  .kanban-col-body {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-  }
-  
-  .kanban-empty {
-    text-align: center;
-    font-size: 12px;
-    color: var(--grey-500);
-    padding: 24px 0;
-  }
+  background: var(--surface);
+  border: 1.5px solid #e2e2e6;
+  border-radius: 18px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.kanban-col-over {
+  border-color: var(--burgundy-300);
+  background: var(--burgundy-100);
+}
+
+.kanban-col-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.kanban-col-head h3 { font-size: 14px; font-weight: 600; }
+
+.kanban-count {
+  font-size: 12px;
+  background: var(--grey-100);
+  padding: 2px 9px;
+  border-radius: 999px;
+  color: var(--grey-500);
+}
+
+/* ---------- Filter ---------- */
+
+.kanban-filter { position: relative; margin-left: auto; }
+
+.kanban-filter-btn {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--grey-500);
+  cursor: pointer;
+}
+.kanban-filter-btn:hover { background: var(--grey-100); }
+.kanban-filter-btn.is-active { color: #82143c; background: #f8edf1; }
+
+.kanban-filter-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #82143c;
+  border: 1.5px solid #fff;
+}
+
+.kanban-filter-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  width: 220px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #ece3e8;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(35, 20, 30, 0.14);
+}
+
+.kanban-filter-label {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #8c818b;
+}
+.kanban-filter-label:not(:first-child) { margin-top: 12px; }
+
+.kanban-filter-options { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.kanban-filter-chip {
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  text-transform: capitalize;
+  color: #554851;
+  background: #fff;
+  border: 1px solid #e5dce2;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.kanban-filter-chip:hover { background: #f8f5f7; }
+.kanban-filter-chip.is-selected {
+  background: #82143c;
+  border-color: #82143c;
+  color: #fff;
+}
+
+.kanban-filter-select {
+  width: 100%;
+  padding: 7px 8px;
+  font: inherit;
+  font-size: 12px;
+  color: #342a32;
+  background: #fff;
+  border: 1px solid #e5dce2;
+  border-radius: 8px;
+}
+
+.kanban-filter-clear {
+  width: 100%;
+  margin-top: 14px;
+  padding: 7px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: #82143c;
+  background: #fcf7f9;
+  border: 1px solid #f0e3e9;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.kanban-filter-clear:disabled { opacity: 0.45; cursor: default; }
+
+.kanban-filter-btn:focus-visible,
+.kanban-filter-chip:focus-visible,
+.kanban-filter-select:focus-visible,
+.kanban-filter-clear:focus-visible {
+  outline: 2px solid #c96789;
+  outline-offset: 2px;
+}
+
+/* ---------- Body ---------- */
+
+.kanban-col-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.kanban-empty {
+  text-align: center;
+  font-size: 12px;
+  color: var(--grey-500);
+  padding: 24px 0;
+}

@@ -1,0 +1,51 @@
+.coming-soon-page {
+    display: grid;
+    place-items: center;
+    min-height: 100%;
+    padding: 24px;
+  }
+  
+  .coming-soon-card {
+    width: 100%;
+    max-width: 460px;
+    padding: 48px 32px;
+    text-align: center;
+    background: var(--panel-bg);
+    border-radius: var(--radius-lg);
+  }
+  
+  .coming-soon-icon {
+    display: grid;
+    place-items: center;
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: var(--burgundy-100);
+    color: var(--burgundy-700);
+  }
+  
+  .coming-soon-tag {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: var(--burgundy-700);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+  }
+  
+  .coming-soon-card h1 {
+    margin: 0 0 10px;
+    font-size: 24px;
+    color: var(--grey-900);
+  }
+  
+  .coming-soon-card p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--grey-500);
+  }

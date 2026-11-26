@@ -68,7 +68,36 @@
 .pd-timeline span { font-size: 11px; color: #948b98; }
 .pd-actions { display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; padding-top: 12px; }
 
+/* Project files (upload coming soon) */
+.pd-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #c96789;
+  background: white;
+  color: #a74f70;
+  padding: 8px 12px;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.pd-upload-btn:hover { background: #c96789; color: white; }
 
+.pd-soon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px dashed #c96789;
+  border-radius: 10px;
+  background: #fbeaf0;
+  color: #a74f70;
+}
+.pd-soon div { flex: 1; min-width: 0; }
+.pd-soon strong { display: block; font-size: 13px; color: #65132f; }
+.pd-soon p { margin: 2px 0 0; font-size: 12px; color: #706875; }
 /* Shared dropdown inside Project Details */
 
 .pd-status-dropdown,

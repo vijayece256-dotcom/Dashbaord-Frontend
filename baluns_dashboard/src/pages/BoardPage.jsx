@@ -1,7 +1,13 @@
 
-import { useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { Plus } from "lucide-react";
+import {
+  Plus,
+  Flag,
+  UserRound,
+  ChevronDown,
+  Check,
+} from "lucide-react";
 
 import { useBoards } from "../context/BoardsContext.jsx";
 import { COLUMNS } from "../data/columns.js";
@@ -17,6 +23,14 @@ import TaskDetailModal from "../components/boards/TaskDetailModal.jsx";
 import "./BoardPage.css";
 
 const FIRST_COLUMN = COLUMNS[0].id;
+
+const PRIORITIES = [
+  { label: "All priorities", value: "all" },
+  { label: "Low", value: "low" },
+  { label: "Medium", value: "medium" },
+  { label: "High", value: "high" },
+  { label: "Urgent", value: "urgent" },
+];
 
 export default function BoardPage() {
   const { boardId } = useParams();
@@ -35,10 +49,51 @@ export default function BoardPage() {
   const [openTaskId, setOpenTaskId] = useState(null);
   const [query, setQuery] = useState("");
 
-  // Find current board
+  const [filters, setFilters] = useState({
+    priority: "all",
+    assignee: "all",
+  });
+
+  const [openDropdown, setOpenDropdown] = useState(null);
+
+  const priorityRef = useRef(null);
+  const assigneeRef = useRef(null);
+
   const board = boards.find(
     (b) => String(b.id) === String(boardId)
   );
+
+  const assignees = useMemo(
+    () =>
+      [
+        ...new Set(
+          (board?.tasks || [])
+            .map((task) => task.assignee)
+            .filter(Boolean)
+        ),
+      ].sort(),
+    [board]
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        !priorityRef.current?.contains(event.target) &&
+        !assigneeRef.current?.contains(event.target)
+      ) {
+        setOpenDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
+  }, []);
 
   if (!board) {
     return (
@@ -49,32 +104,36 @@ export default function BoardPage() {
     );
   }
 
-  // Search tasks
   const q = query.trim().toLowerCase();
 
-  const tasks = (board.tasks || []).filter(
-    (task) =>
+  const tasks = (board.tasks || []).filter((task) => {
+    const matchesSearch =
       !q ||
-      task.title.toLowerCase().includes(q) ||
-      (task.assignee || "")
-        .toLowerCase()
-        .includes(q)
-  );
+      (task.title || "").toLowerCase().includes(q) ||
+      (task.assignee || "").toLowerCase().includes(q);
 
-  // Currently opened task
+    const matchesPriority =
+      filters.priority === "all" ||
+      task.priority === filters.priority;
+
+    const matchesAssignee =
+      filters.assignee === "all" ||
+      task.assignee === filters.assignee;
+
+    return (
+      matchesSearch &&
+      matchesPriority &&
+      matchesAssignee
+    );
+  });
+
   const openTask = (board.tasks || []).find(
     (task) => task.id === openTaskId
   );
 
-  // =========================================
-  // DELETE TASK
-  // Confirmation is handled in TaskCard.jsx
-  // =========================================
-
   const handleDelete = (taskId) => {
     deleteTask(board.id, taskId);
 
-    // Close details if deleted task was open
     if (openTaskId === taskId) {
       setOpenTaskId(null);
     }
@@ -82,29 +141,153 @@ export default function BoardPage() {
 
   return (
     <div className="board-page">
-      {/* PAGE HEADER */}
-
       <PageHeader
         title={board.name}
-        subtitle={`${
-          (board.tasks || []).length
-        } tasks. Drag a card to change its status, double-click to open it.`}
+        subtitle={`${(board.tasks || []).length} tasks. Drag a card to change its status, double-click to open it.`}
       >
-        <SearchInput
-          value={query}
-          onChange={setQuery}
-          placeholder="Search tasks or assignee"
-        />
+        <div className="board-toolbar">
+          <SearchInput
+            value={query}
+            onChange={setQuery}
+            placeholder="Search tasks or assignee"
+          />
 
-        <Button
-          icon={Plus}
-          onClick={() => setShowCreate(true)}
-        >
-          Create task
-        </Button>
+          {/* PRIORITY FILTER */}
+          <div className="board-filter" ref={priorityRef}>
+            <button
+              type="button"
+              className={`board-filter-btn ${
+                filters.priority !== "all" ? "is-active" : ""
+              }`}
+              onClick={() =>
+                setOpenDropdown(
+                  openDropdown === "priority" ? null : "priority"
+                )
+              }
+            >
+              <Flag size={16} />
+              <span>
+                {filters.priority === "all"
+                  ? "Priority"
+                  : PRIORITIES.find(
+                      (p) => p.value === filters.priority
+                    )?.label}
+              </span>
+              <ChevronDown size={14} />
+            </button>
+
+            {openDropdown === "priority" && (
+              <div className="board-filter-menu">
+                {PRIORITIES.map((priority) => (
+                  <button
+                    type="button"
+                    key={priority.value}
+                    className={`filter-option ${
+                      filters.priority === priority.value
+                        ? "selected"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        priority: priority.value,
+                      }));
+                      setOpenDropdown(null);
+                    }}
+                  >
+                    <span>{priority.label}</span>
+
+                    {filters.priority === priority.value && (
+                      <Check size={16} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ASSIGNEE FILTER */}
+          <div className="board-filter" ref={assigneeRef}>
+            <button
+              type="button"
+              className={`board-filter-btn ${
+                filters.assignee !== "all" ? "is-active" : ""
+              }`}
+              onClick={() =>
+                setOpenDropdown(
+                  openDropdown === "assignee" ? null : "assignee"
+                )
+              }
+            >
+              <UserRound size={16} />
+
+              <span>
+                {filters.assignee === "all"
+                  ? "Assignee"
+                  : filters.assignee}
+              </span>
+
+              <ChevronDown size={14} />
+            </button>
+
+            {openDropdown === "assignee" && (
+              <div className="board-filter-menu">
+                <button
+                  type="button"
+                  className={`filter-option ${
+                    filters.assignee === "all" ? "selected" : ""
+                  }`}
+                  onClick={() => {
+                    setFilters((prev) => ({
+                      ...prev,
+                      assignee: "all",
+                    }));
+                    setOpenDropdown(null);
+                  }}
+                >
+                  <span>All assignees</span>
+
+                  {filters.assignee === "all" && (
+                    <Check size={16} />
+                  )}
+                </button>
+
+                {assignees.map((assignee) => (
+                  <button
+                    type="button"
+                    key={assignee}
+                    className={`filter-option ${
+                      filters.assignee === assignee
+                        ? "selected"
+                        : ""
+                    }`}
+                    onClick={() => {
+                      setFilters((prev) => ({
+                        ...prev,
+                        assignee,
+                      }));
+                      setOpenDropdown(null);
+                    }}
+                  >
+                    <span>{assignee}</span>
+
+                    {filters.assignee === assignee && (
+                      <Check size={16} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Button
+            icon={Plus}
+            onClick={() => setShowCreate(true)}
+          >
+            Create task
+          </Button>
+        </div>
       </PageHeader>
-
-      {/* KANBAN BOARD */}
 
       <div className="kanban">
         {COLUMNS.map((column) => (
@@ -117,9 +300,8 @@ export default function BoardPage() {
               );
 
               return (
-                (known
-                  ? task.status
-                  : FIRST_COLUMN) === column.id
+                (known ? task.status : FIRST_COLUMN) ===
+                column.id
               );
             })}
             onDropTask={(taskId, status) =>
@@ -130,8 +312,6 @@ export default function BoardPage() {
           />
         ))}
       </div>
-
-      {/* CREATE TASK MODAL */}
 
       {showCreate && (
         <CreateTaskModal
@@ -144,26 +324,16 @@ export default function BoardPage() {
         />
       )}
 
-      {/* TASK DETAILS MODAL */}
-
       {openTask && (
         <TaskDetailModal
           key={openTask.id}
           task={openTask}
           onClose={() => setOpenTaskId(null)}
           onUpdate={(changes) =>
-            updateTask(
-              board.id,
-              openTask.id,
-              changes
-            )
+            updateTask(board.id, openTask.id, changes)
           }
           onAddComment={(comment) =>
-            addComment(
-              board.id,
-              openTask.id,
-              comment
-            )
+            addComment(board.id, openTask.id, comment)
           }
           onEditComment={(commentId, text) =>
             editComment(

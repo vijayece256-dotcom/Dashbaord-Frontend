@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   UserPlus,
@@ -6,17 +7,21 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+
 import Modal from "../common/Modal.jsx";
 import Input from "../common/Input.jsx";
 import Button from "../common/Button.jsx";
 import "./AddUserModal.css";
+
 import { useAuth } from "../../context/AuthContext.jsx";
 import { API_BASE_URL } from "../../config/env.js";
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_PATTERN = /^[A-Za-z]{1,50}$/;
 
 const ACCOUNT_TYPES = [
   {
-    value: "user",
+    value: "employee",
     label: "Normal user",
     description: "Access assigned features and projects.",
     icon: UserRound,
@@ -30,12 +35,16 @@ const ACCOUNT_TYPES = [
 ];
 
 export default function AddUserModal({ onCreate, onClose }) {
+  const { token } = useAuth();
+
   const [form, setForm] = useState({
+    firstname: "",
+    lastname: "",
     email: "",
-    userType: "user",
+    userType: "employee",
     password: "",
   });
-  const { token } = useAuth();
+
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -55,43 +64,57 @@ export default function AddUserModal({ onCreate, onClose }) {
 
   const submit = async (e) => {
     e.preventDefault();
-  
+
     if (busy) return;
-  
+
     const found = {};
-  
+
+    const firstName = form.firstname.trim();
+    const lastName = form.lastname.trim();
+
+    if (!NAME_PATTERN.test(firstName)) {
+      found.firstname = "Use 1–50 letters without spaces or symbols.";
+    }
+
+    if (!NAME_PATTERN.test(lastName)) {
+      found.lastname = "Use 1–50 letters without spaces or symbols.";
+    }
+
     if (!EMAIL_PATTERN.test(form.email.trim())) {
       found.email = "Enter a valid email address.";
     }
-  
-    if (form.password && form.password.length < 8) {
-      found.password =
-        "Use at least 8 characters or leave empty to auto-generate.";
+
+    if (form.password.length < 8) {
+      found.password = "Temporary password must contain at least 8 characters.";
     }
-  
-    if (!["admin", "user"].includes(form.userType)) {
+
+    if (!["employee", "admin"].includes(form.userType)) {
       found.userType = "Select a valid account type.";
     }
-  
+
     if (!token) {
       found.form = "Please log in again.";
     }
-  
+
     setErrors(found);
-  
+
     if (Object.keys(found).length > 0) return;
-  
+
     setBusy(true);
-  
+
     try {
       const payload = {
-        email: form.email.trim().toLowerCase(),
+        firstName,
+        lastName,
+        emailaddress: form.email.trim().toLowerCase(),
         userType: form.userType,
         password: form.password,
-        mustChangePassword: true,
+        isPermanentPassword: false,
+        isActive: true,
+        isAccount: true,
+        isEmployee: false,
       };
-  
-      // Create account API
+
       const response = await fetch(
         `${API_BASE_URL}/v1/employee`,
         {
@@ -104,9 +127,9 @@ export default function AddUserModal({ onCreate, onClose }) {
           body: JSON.stringify(payload),
         }
       );
-  
+
       const data = await response.json().catch(() => null);
-  
+
       if (!response.ok) {
         throw new Error(
           data?.message ||
@@ -114,13 +137,18 @@ export default function AddUserModal({ onCreate, onClose }) {
           `Unable to create account (${response.status}).`
         );
       }
-  
-      // Refresh employee list after successful creation
-      onCreate?.(data);
-  
-      // Close modal
+
+      const result = await onCreate?.({
+        ...payload,
+        ...data,
+      });
+
+      if (result?.ok === false) {
+        throw new Error(result.error || "Unable to complete account creation.");
+      }
+
       onClose();
-  
+
     } catch (error) {
       setErrors({
         form: error.message || "Something went wrong.",
@@ -141,7 +169,6 @@ export default function AddUserModal({ onCreate, onClose }) {
         onSubmit={submit}
         noValidate
       >
-        {/* Introduction */}
         <div className="account-intro">
           <div className="account-intro-icon">
             <UserPlus size={23} />
@@ -152,6 +179,32 @@ export default function AddUserModal({ onCreate, onClose }) {
             of your organisation.
           </p>
         </div>
+
+        {/* First name */}
+        <Input
+          label="First name"
+          placeholder="Enter first name"
+          value={form.firstname}
+          error={errors.firstname}
+          autoComplete="given-name"
+          disabled={busy}
+          onChange={(e) =>
+            updateField("firstname", e.target.value)
+          }
+        />
+
+        {/* Last name */}
+        <Input
+          label="Last name"
+          placeholder="Enter last name"
+          value={form.lastname}
+          error={errors.lastname}
+          autoComplete="family-name"
+          disabled={busy}
+          onChange={(e) =>
+            updateField("lastname", e.target.value)
+          }
+        />
 
         {/* Email */}
         <Input
@@ -181,8 +234,7 @@ export default function AddUserModal({ onCreate, onClose }) {
           >
             {ACCOUNT_TYPES.map((account) => {
               const Icon = account.icon;
-              const selected =
-                form.userType === account.value;
+              const selected = form.userType === account.value;
 
               return (
                 <label
@@ -207,10 +259,7 @@ export default function AddUserModal({ onCreate, onClose }) {
                     checked={selected}
                     disabled={busy}
                     onChange={() =>
-                      updateField(
-                        "userType",
-                        account.value
-                      )
+                      updateField("userType", account.value)
                     }
                   />
                 </label>
@@ -219,17 +268,15 @@ export default function AddUserModal({ onCreate, onClose }) {
           </div>
 
           {errors.userType && (
-            <p className="field-error">
-              {errors.userType}
-            </p>
+            <p className="field-error">{errors.userType}</p>
           )}
         </div>
 
         {/* Temporary password */}
         <Input
-          label="Temporary password (optional)"
+          label="Temporary password"
           type={showPassword ? "text" : "password"}
-          placeholder="Leave empty to auto-generate"
+          placeholder="Enter temporary password"
           value={form.password}
           error={errors.password}
           autoComplete="new-password"
@@ -245,9 +292,7 @@ export default function AddUserModal({ onCreate, onClose }) {
                 setShowPassword((prev) => !prev)
               }
               aria-label={
-                showPassword
-                  ? "Hide password"
-                  : "Show password"
+                showPassword ? "Hide password" : "Show password"
               }
             >
               {showPassword ? (
@@ -259,28 +304,24 @@ export default function AddUserModal({ onCreate, onClose }) {
           }
         />
 
-        {/* First login information */}
         <div className="account-security-note">
           <ShieldCheck size={21} />
 
           <div>
             <strong>Secure first login</strong>
-
             <p>
-              The user must change their temporary
-              password when signing in for the first time.
+              The user must change their temporary password
+              when signing in for the first time.
             </p>
           </div>
         </div>
 
-        {/* Form error */}
         {errors.form && (
           <p className="account-form-error" role="alert">
             {errors.form}
           </p>
         )}
 
-        {/* Footer */}
         <div className="modal-actions account-modal-actions">
           <Button
             type="button"
@@ -291,10 +332,7 @@ export default function AddUserModal({ onCreate, onClose }) {
             Cancel
           </Button>
 
-          <Button
-            type="submit"
-            disabled={busy}
-          >
+          <Button type="submit" disabled={busy}>
             {busy ? "Creating account..." : "Create account"}
           </Button>
         </div>

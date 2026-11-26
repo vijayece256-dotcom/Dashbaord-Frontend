@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useMemo, useState } from "react";
+
 import {
   X,
   UserRoundPlus,
@@ -12,10 +14,12 @@ import {
   FolderKanban,
   Users,
   ChartNoAxesCombined,
+  Bell,
+  Megaphone,
 } from "lucide-react";
-
-import { useAuth } from "../../context/AuthContext.jsx";
 import { API_BASE_URL } from "../../config/env.js";
+import { useAuth } from "../../context/AuthContext.jsx";
+
 import "./EmployeeFormModal.css";
 
 const STEPS = [
@@ -24,119 +28,248 @@ const STEPS = [
   { id: 3, label: "Board access", icon: Kanban },
 ];
 
-const FEATURES = [
-  {
-    key: "dashboard",
-    label: "Dashboard",
-    icon: LayoutDashboard,
-    description: "Access dashboard and work overview",
-  },
-  {
-    key: "tasks",
-    label: "Tasks",
-    icon: ListChecks,
-    description: "Access the tasks page",
-  },
-  {
-    key: "projects",
-    label: "Projects",
-    icon: FolderKanban,
-    description: "Access project information",
-  },
-  {
-    key: "team",
-    label: "Team",
-    icon: Users,
-    description: "Access employee and team information",
-  },
-  {
-    key: "analytics",
-    label: "Analytics",
-    icon: ChartNoAxesCombined,
-    description: "Access reports and analytics",
-  },
-];
-
-const DEFAULT_PERMISSIONS = {
-  dashboard: false,
-  tasks: false,
-  projects: false,
-  team: false,
-  analytics: false,
+// Icons are only for presentation. Feature names and codes
+// always come from the backend.
+const FEATURE_ICONS = {
+  dashboard: LayoutDashboard,
+  tasks: ListChecks,
+  projects: FolderKanban,
+  team: Users,
+  analytics: ChartNoAxesCombined,
+  notifications: Bell,
+  announcements: Megaphone,
+  annoucements: Megaphone,
 };
 
 const getId = (item) => item?._id ?? item?.id ?? "";
+
+const getRefId = (value) => {
+  if (value && typeof value === "object") {
+    return String(value._id ?? value.id ?? "");
+  }
+
+  return String(value ?? "");
+};
+
+const getFeatureCode = (item) => {
+  if (item && typeof item === "object") {
+    return String(item.featureCode ?? item.code ?? "");
+  }
+
+  return String(item ?? "");
+};
+
+const getFeatureName = (feature) =>
+  feature?.featureName ?? feature?.name ?? "Unnamed feature";
+
+const getFeatureIcon = (feature) => {
+  const normalizedName = getFeatureName(feature)
+    .trim()
+    .toLowerCase();
+
+  return FEATURE_ICONS[normalizedName] || ShieldCheck;
+};
+
+const getFirstName = (account) =>
+  account?.firstname ?? account?.firstName ?? "";
+
+const getLastName = (account) =>
+  account?.lastname ?? account?.lastName ?? "";
+
+const getEmail = (account) =>
+  account?.emailaddress ?? account?.email ?? "";
+
+const getDesignationTeam = (designation) => {
+  const team = designation?.team ?? designation?.teamDetails;
+
+  return team && typeof team === "object" ? team : null;
+};
+
+const getDesignationTeamId = (designation) => {
+  const team = designation?.team ?? designation?.teamDetails;
+
+  const id =
+    (typeof team === "object" ? team?._id ?? team?.id : team) ??
+    designation?.teamId?._id ??
+    designation?.teamId ??
+    "";
+
+  return String(id ?? "");
+};
+
+const getDesignationLabel = (designation) =>
+  designation?.designationName ??
+  designation?.name ??
+  designation?.title ??
+  "Unnamed designation";
+
+// ---------------------------------------
+// INITIAL EMPLOYEE FORM
+// ---------------------------------------
+
+const getInitialForm = (employee) => ({
+  ...(employee || {}),
+
+  userId: getRefId(employee?.userId),
+
+  firstname:
+    employee?.firstname ?? employee?.firstName ?? "",
+
+  lastname:
+    employee?.lastname ?? employee?.lastName ?? "",
+
+  empId:
+    employee?.empId ??
+    employee?.employeeCode ??
+    employee?.employee_code ??
+    "",
+
+  email:
+    employee?.email ?? employee?.emailaddress ?? "",
+
+  phonenumber:
+    employee?.phonenumber ?? employee?.phone ?? "",
+
+  teamId:
+    getRefId(employee?.teamId) ||
+    getRefId(employee?.designation?.team),
+
+  designationId:
+    getRefId(employee?.designationId) ||
+    getRefId(employee?.designation),
+
+  projectId: getRefId(employee?.projectId),
+
+  reportingManagerId:
+    getRefId(employee?.reportingManagerId) ||
+    getRefId(employee?.manager_id),
+
+  status:
+    employee?.isActive === false ||
+    employee?.status === "inactive"
+      ? "inactive"
+      : "active",
+
+  isReportingManager:
+    employee?.isReportingManager === true,
+});
+
+// ---------------------------------------
+// INITIAL PERMISSIONS
+// ---------------------------------------
+
+const getInitialPermissions = (employee, features) => {
+  const existingPermissions = employee?.permissions || {};
+
+  const existingFeatures = Array.isArray(employee?.featureAccess)
+    ? employee.featureAccess.map(getFeatureCode)
+    : [];
+
+  return Object.fromEntries(
+    features.map((feature) => {
+      const code = getFeatureCode(feature);
+
+      const existing = existingPermissions[code];
+
+      let enabled = false;
+
+      if (typeof existing === "boolean") {
+        enabled = existing;
+      } else if (typeof existing?.view === "boolean") {
+        enabled = existing.view;
+      } else {
+        enabled = existingFeatures.includes(code);
+      }
+
+      return [code, enabled];
+    })
+  );
+};
+
+const getOriginalFeatureCodes = (employee) =>
+  Array.isArray(employee?.featureAccess)
+    ? employee.featureAccess.map(getFeatureCode).filter(Boolean)
+    : [];
+
+const samePermissions = (a, b, features) =>
+  features.every(({ featureCode }) =>
+    Boolean(a?.[featureCode]) === Boolean(b?.[featureCode])
+  );
+
+// ---------------------------------------
+// COMPONENT
+// ---------------------------------------
 
 export default function EmployeeFormModal({
   employee,
   employees = [],
   accounts = [],
+  accountsLoading = false,
+  accountsError = "",
+  features = [],
+  featuresLoading = false,
+  featuresError = "",
   boards = [],
   projects = [],
   onSave,
   onClose,
 }) {
-  const { token, isAdmin } = useAuth();
+  const { isAdmin,token } = useAuth();
 
   const [step, setStep] = useState(1);
+
   const [designations, setDesignations] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const [form, setForm] = useState(() => ({
-    userId: "",
-    firstname: "",
-    lastname: "",
-    empId: "",
-    email: "",
-    phonenumber: "",
-    teamId: "",
-    designationId: "",
-    projectId: "",
-    reportingManagerId: "",
-    status: "active",
-    ...employee,
-    userId: employee?.userId?._id ?? employee?.userId ?? "",
-    teamId: employee?.teamId ?? employee?.team?._id ?? "",
-    designationId:
-      employee?.designationId ?? employee?.designation?._id ?? "",
-  }));
+  // ---------------------------------------
+  // FORM STATE
+  // ---------------------------------------
 
-  const [permissions, setPermissions] = useState(() =>
-    Object.fromEntries(
-      FEATURES.map(({ key }) => {
-        const existing = employee?.permissions?.[key];
-  
-        return [
-          key,
-          typeof existing === "boolean"
-            ? existing
-            : existing?.view ?? DEFAULT_PERMISSIONS[key],
-        ];
-      })
-    )
-  );
-  
-  const [boardAccess, setBoardAccess] = useState(() =>
-    (employee?.boardAccess || [])
-      .map((board) =>
-        String(
-          typeof board === "object"
-            ? getId(board)
-            : board
-        )
-      )
-      .filter(Boolean)
+  const [form, setForm] = useState(() =>
+    getInitialForm(employee)
   );
 
   // ---------------------------------------
-  // Fetch designations from backend
+  // FEATURE PERMISSIONS
+  // ---------------------------------------
+
+  const [permissions, setPermissions] = useState(() =>
+    getInitialPermissions(employee, features)
+  );
+
+  const [boardAccess, setBoardAccess] = useState(() =>
+    (employee?.boardAccess || []).map(getRefId).filter(Boolean)
+  );
+
+  // Synchronize employee and API features.
+  useEffect(() => {
+    setForm(getInitialForm(employee));
+
+    setPermissions(
+      getInitialPermissions(employee, features)
+    );
+
+    setBoardAccess(
+      (employee?.boardAccess || [])
+        .map(getRefId)
+        .filter(Boolean)
+    );
+
+    setStep(1);
+    setError("");
+  }, [employee, features]);
+
+  // ---------------------------------------
+  // FETCH DESIGNATIONS
   // ---------------------------------------
 
   useEffect(() => {
-    if (!token || !isAdmin) {
+    if (!isAdmin) {
       setLoading(false);
       setFetchError("Administrator access is required.");
       return;
@@ -149,6 +282,8 @@ export default function EmployeeFormModal({
       setFetchError("");
 
       try {
+        // const token = localStorage.getItem("token");
+
         const response = await fetch(
           `${API_BASE_URL}/v1/team/designation`,
           {
@@ -166,7 +301,11 @@ export default function EmployeeFormModal({
           );
         }
 
-        const data = await response.json();
+        const result = await response.json();
+
+        const data = Array.isArray(result)
+          ? result
+          : result?.data ?? result?.designations ?? [];
 
         if (!Array.isArray(data)) {
           throw new Error("Invalid designation response.");
@@ -174,11 +313,12 @@ export default function EmployeeFormModal({
 
         if (!controller.signal.aborted) {
           setDesignations(
-            data.filter(
-              (d) =>
-                d.isActive === true &&
-                d.team?.isActive === true
-            )
+            data.filter((designation) => {
+              const active = designation.isActive !== false;
+              const team = getDesignationTeam(designation);
+
+              return active && (!team || team.isActive !== false);
+            })
           );
         }
       } catch (err) {
@@ -195,10 +335,10 @@ export default function EmployeeFormModal({
     fetchDesignations();
 
     return () => controller.abort();
-  }, [token, isAdmin]);
+  }, [isAdmin]);
 
   // ---------------------------------------
-  // Form handlers
+  // FORM HANDLERS
   // ---------------------------------------
 
   const set = (key, value) => {
@@ -210,73 +350,136 @@ export default function EmployeeFormModal({
     setError("");
   };
 
+  // ---------------------------------------
+  // SELECT EXISTING ACCOUNT
+  // ---------------------------------------
+
   const selectAccount = (id) => {
     const account = accounts.find(
-      (a) => String(getId(a)) === String(id)
+      (item) => String(getId(item)) === String(id)
     );
+
+    if (!account) {
+      setForm((prev) => ({
+        ...prev,
+        userId: "",
+        firstname: "",
+        lastname: "",
+        email: "",
+      }));
+
+      setError("");
+      return;
+    }
 
     setForm((prev) => ({
       ...prev,
       userId: id,
-      email: account?.emailaddress || account?.email || "",
+      firstname: getFirstName(account),
+      lastname: getLastName(account),
+      email: getEmail(account),
     }));
 
     setError("");
   };
 
-  // Unique active teams from designation API.
-  const teams = Array.from(
-    new Map(
-      designations.map((d) => [
-        String(d.team._id),
-        d.team,
-      ])
-    ).values()
+  // ---------------------------------------
+  // TEAMS AND DESIGNATIONS
+  // ---------------------------------------
+
+  const teams = useMemo(() => {
+    const teamMap = new Map();
+
+    designations.forEach((designation) => {
+      const teamId = getDesignationTeamId(designation);
+
+      if (!teamId) return;
+
+      const team = getDesignationTeam(designation);
+
+      teamMap.set(teamId, {
+        ...team,
+        _id: teamId,
+        teamName:
+          team?.teamName ??
+          team?.name ??
+          designation.teamName ??
+          "Unnamed team",
+      });
+    });
+
+    return Array.from(teamMap.values());
+  }, [designations]);
+
+  const availableDesignations = useMemo(
+    () =>
+      designations.filter(
+        (designation) =>
+          getDesignationTeamId(designation) === String(form.teamId)
+      ),
+    [designations, form.teamId]
   );
 
-  const availableDesignations = designations.filter(
-    (d) =>
-      String(d.team?._id) === String(form.teamId)
+  const availableProjects = useMemo(
+    () =>
+      projects.filter((project) => {
+        const projectTeamId =
+          getRefId(project.teamId) ||
+          getRefId(project.team);
+
+        return (
+          !projectTeamId ||
+          projectTeamId === String(form.teamId)
+        );
+      }),
+    [projects, form.teamId]
   );
 
-  const availableProjects = projects.filter(
-    (p) =>
-      String(p.teamId?._id ?? p.teamId ?? p.team?._id ?? "") ===
-      String(form.teamId)
-  );
-
-  const availableManagers = employees.filter(
-    (person) =>
-      String(getId(person)) !== String(getId(employee)) &&
-      person.status !== "inactive" &&
-      person.isActive !== false
+  const availableManagers = useMemo(
+    () =>
+      employees.filter(
+        (person) =>
+          String(getId(person)) !== String(getId(employee)) &&
+          person.status !== "inactive" &&
+          person.isActive !== false &&
+          (person.isReportingManager === true ||
+            String(getId(person)) ===
+              String(form.reportingManagerId))
+      ),
+    [employees, employee, form.reportingManagerId]
   );
 
   // ---------------------------------------
-  // Feature permissions
+  // FEATURE PERMISSIONS
   // ---------------------------------------
 
-  const togglePermission = (feature) => {
+  const togglePermission = (featureCode) => {
     setPermissions((prev) => ({
       ...prev,
-      [feature]: !prev[feature],
+      [featureCode]: !prev[featureCode],
     }));
+
+    setError("");
   };
-  
+
+  // ---------------------------------------
+  // BOARD ACCESS
+  // ---------------------------------------
+
   const toggleBoard = (id) => {
     const boardId = String(id);
-  
+
     setBoardAccess((prev) =>
       prev.includes(boardId)
         ? prev.filter((item) => item !== boardId)
         : [...prev, boardId]
     );
   };
-  
-
 
   const selectAllBoards = () => {
-    setBoardAccess(boards.map((b) => String(getId(b))));
+    setBoardAccess(
+      boards.map((board) => String(getId(board))).filter(Boolean)
+    );
   };
 
   const clearAllBoards = () => {
@@ -284,11 +487,11 @@ export default function EmployeeFormModal({
   };
 
   // ---------------------------------------
-  // Validation
+  // VALIDATION
   // ---------------------------------------
 
   const validateDetails = () => {
-    if (!form.userId) {
+    if (!employee && !form.userId) {
       return "Select an existing user account.";
     }
 
@@ -298,6 +501,10 @@ export default function EmployeeFormModal({
 
     if (!form.lastname.trim()) {
       return "Last name is required.";
+    }
+
+    if (!form.email.trim()) {
+      return "Email address is required.";
     }
 
     if (!form.empId.trim()) {
@@ -312,11 +519,12 @@ export default function EmployeeFormModal({
       return "Select a designation.";
     }
 
-    if (
-      !availableDesignations.some(
-        (d) => String(d._id) === String(form.designationId)
-      )
-    ) {
+    const designationExists = availableDesignations.some(
+      (designation) =>
+        String(getId(designation)) === String(form.designationId)
+    );
+
+    if (!designationExists) {
       return "Select an active designation belonging to the selected team.";
     }
 
@@ -338,7 +546,7 @@ export default function EmployeeFormModal({
   };
 
   // ---------------------------------------
-  // Save employee
+  // SAVE EMPLOYEE
   // ---------------------------------------
 
   const submit = async (ev) => {
@@ -351,61 +559,156 @@ export default function EmployeeFormModal({
       return;
     }
 
-    const message = validateDetails();
+    const validationError = validateDetails();
 
-    if (message) {
-      setError(message);
+    if (validationError) {
+      setError(validationError);
       setStep(1);
       return;
     }
 
+    if (featuresLoading) {
+      setError("Please wait until features finish loading.");
+      setStep(2);
+      return;
+    }
+
+    if (featuresError) {
+      setError(featuresError);
+      setStep(2);
+      return;
+    }
+
     const selectedTeam = teams.find(
-      (t) => String(t._id) === String(form.teamId)
+      (team) => String(getId(team)) === String(form.teamId)
     );
 
     const selectedDesignation = designations.find(
-      (d) => String(d._id) === String(form.designationId)
+      (designation) =>
+        String(getId(designation)) === String(form.designationId)
     );
 
     const selectedProject = availableProjects.find(
-      (p) => String(getId(p)) === String(form.projectId)
+      (project) =>
+        String(getId(project)) === String(form.projectId)
     );
 
     const selectedManager = employees.find(
-      (p) => String(getId(p)) === String(form.reportingManagerId)
+      (person) =>
+        String(getId(person)) === String(form.reportingManagerId)
     );
+
+    const firstName = form.firstname.trim();
+    const lastName = form.lastname.trim();
+    const email = form.email.trim().toLowerCase();
+    const employeeCode = form.empId.trim();
+
+    // ---------------------------------------
+    // FEATURE ACCESS
+    // ---------------------------------------
+
+    const originalPermissions = getInitialPermissions(
+      employee,
+      features
+    );
+
+    const featurePermissionsChanged = !samePermissions(
+      permissions,
+      originalPermissions,
+      features
+    );
+
+    const originalFeatureCodes = getOriginalFeatureCodes(employee);
+
+    let featureAccess;
+
+    if (!featurePermissionsChanged) {
+      // Preserve existing backend codes when unchanged.
+      featureAccess = originalFeatureCodes;
+    } else {
+      // Send featureCode, NEVER featureName.
+      featureAccess = features
+        .filter(
+          (feature) =>
+            permissions[getFeatureCode(feature)] === true
+        )
+        .map(getFeatureCode)
+        .filter(Boolean);
+    }
+
+    // ---------------------------------------
+    // BOARD ACCESS
+    // ---------------------------------------
+
+    const validBoardAccess = boardAccess.filter((id) =>
+      boards.some(
+        (board) => String(getId(board)) === String(id)
+      )
+    );
+
+    // ---------------------------------------
+    // FINAL API PAYLOAD
+    // ---------------------------------------
 
     const payload = {
       ...form,
 
-      firstname: form.firstname.trim(),
-      lastname: form.lastname.trim(),
+      ...(employee
+        ? {
+            _id: getId(employee),
+            id: getId(employee),
+          }
+        : {}),
 
-      // Existing table compatibility
-      name: `${form.firstname.trim()} ${form.lastname.trim()}`,
-      email: form.email,
-      empId: form.empId.trim(),
+      firstname: firstName,
+      lastname: lastName,
 
-      role: selectedDesignation?.name || "",
-      team: selectedTeam?.teamName || "",
-      project: selectedProject?.name || "",
-      manager: selectedManager?.name || "",
+      name: `${firstName} ${lastName}`,
 
-      // Backend references
-      userId: form.userId,
+      employee_code: employeeCode,
+
+      emailaddress: email,
+
+      phonenumber: form.phonenumber,
+
+      userId: form.userId || undefined,
+
       teamId: form.teamId,
       designationId: form.designationId,
+
       projectId: selectedProject ? form.projectId : null,
+
       reportingManagerId: form.reportingManagerId || null,
+      manager_id: form.reportingManagerId || null,
 
-      permissions,
+      role: selectedDesignation
+        ? getDesignationLabel(selectedDesignation)
+        : "",
 
-boardAccess: boardAccess.filter((id) =>
-  boards.some(
-    (board) => String(getId(board)) === String(id)
-  )
-),
+      team: selectedTeam?.teamName ?? "",
+
+      project: selectedProject?.name ?? "",
+
+      manager: selectedManager?.name ?? "",
+
+      isActive: form.status !== "inactive",
+
+      status: form.status,
+
+      isAccount: true,
+      isEmployee: true,
+
+      isReportingManager: !!form.isReportingManager,
+
+      userType: "employee",
+
+      // Actual API feature codes.
+      featureAccess,
+
+      boardAccess: validBoardAccess,
     };
+
+    console.log("Employee payload:", payload);
 
     setBusy(true);
     setError("");
@@ -413,7 +716,7 @@ boardAccess: boardAccess.filter((id) =>
     try {
       const result = await onSave(payload);
 
-      if (result === false || result?.ok === false) {
+      if (result === false || result?.ok !== true) {
         throw new Error(
           result?.error || "Unable to save employee."
         );
@@ -424,6 +727,10 @@ boardAccess: boardAccess.filter((id) =>
       setBusy(false);
     }
   };
+
+  // ---------------------------------------
+  // UI
+  // ---------------------------------------
 
   return (
     <div
@@ -439,8 +746,6 @@ boardAccess: boardAccess.filter((id) =>
         aria-labelledby="employee-modal-title"
         noValidate
       >
-        {/* HEADER */}
-
         <header className="employee-wizard-header">
           <div className="employee-header-icon">
             <UserRoundPlus size={24} />
@@ -479,6 +784,15 @@ boardAccess: boardAccess.filter((id) =>
                 key={item.id}
                 disabled={busy || item.id > step}
                 onClick={() => {
+                  if (item.id === 1 || step === 1) {
+                    const message = validateDetails();
+
+                    if (message && item.id > 1) {
+                      setError(message);
+                      return;
+                    }
+                  }
+
                   setError("");
                   setStep(item.id);
                 }}
@@ -503,19 +817,20 @@ boardAccess: boardAccess.filter((id) =>
                 <h3>Personal information</h3>
 
                 <div className="team-form-grid">
-
                   <label className="employee-full-width">
                     Link existing user account
 
                     <select
-                      value={form.userId}
+                      value={form.userId || ""}
                       onChange={(ev) =>
                         selectAccount(ev.target.value)
                       }
-                      disabled={!!employee}
+                      disabled={!!employee || busy || accountsLoading}
                     >
                       <option value="">
-                        Select registered account
+                        {accountsLoading
+                          ? "Loading accounts..."
+                          : "Select registered account"}
                       </option>
 
                       {accounts.map((account) => (
@@ -523,51 +838,65 @@ boardAccess: boardAccess.filter((id) =>
                           key={getId(account)}
                           value={getId(account)}
                         >
-                          {account.emailaddress || account.email}
+                          {getEmail(account)}
                         </option>
                       ))}
                     </select>
 
+                    {accountsError && (
+                      <small className="team-error">
+                        {accountsError}
+                      </small>
+                    )}
+
                     <small>
                       Create login accounts in Settings first.
+                      Select an account to autofill its details.
                     </small>
                   </label>
 
                   <label>
                     First name
+
                     <input
                       value={form.firstname}
                       onChange={(ev) =>
                         set("firstname", ev.target.value)
                       }
                       placeholder="First name"
+                      disabled={busy}
                     />
                   </label>
 
                   <label>
                     Last name
+
                     <input
                       value={form.lastname}
                       onChange={(ev) =>
                         set("lastname", ev.target.value)
                       }
                       placeholder="Last name"
+                      disabled={busy}
                     />
                   </label>
 
                   <label>
                     Employee ID
+
                     <input
                       value={form.empId}
                       onChange={(ev) =>
                         set("empId", ev.target.value)
                       }
-                      placeholder="EMP001"
+                      placeholder="BAL001"
+                      disabled={busy}
                     />
                   </label>
 
                   <label>
                     Phone number
+
                     <input
                       type="tel"
                       value={form.phonenumber}
@@ -575,18 +904,34 @@ boardAccess: boardAccess.filter((id) =>
                         set("phonenumber", ev.target.value)
                       }
                       placeholder="Phone number"
+                      disabled={busy}
                     />
                   </label>
 
                   <label className="employee-full-width">
                     Email address
+
                     <input
                       value={form.email}
-                      placeholder="Auto-filled from user account"
+                      placeholder="Email address"
                       readOnly
                     />
                   </label>
 
+                  <label>
+                    Account status
+
+                    <select
+                      value={form.status}
+                      onChange={(ev) =>
+                        set("status", ev.target.value)
+                      }
+                      disabled={busy}
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </label>
                 </div>
               </section>
 
@@ -598,18 +943,34 @@ boardAccess: boardAccess.filter((id) =>
                 )}
 
                 <div className="team-form-grid">
-
                   <label>
                     Department / Team
 
                     <select
                       value={form.teamId}
-                      disabled={loading || !!fetchError}
+                      disabled={loading || !!fetchError || busy}
                       onChange={(ev) => {
+                        const teamId = ev.target.value;
+
+                        const currentDesignation =
+                          designations.find(
+                            (d) =>
+                              String(getId(d)) ===
+                              String(form.designationId)
+                          );
+
+                        const designationStillValid =
+                          currentDesignation &&
+                          getDesignationTeamId(
+                            currentDesignation
+                          ) === String(teamId);
+
                         setForm((prev) => ({
                           ...prev,
-                          teamId: ev.target.value,
-                          designationId: "",
+                          teamId,
+                          designationId: designationStillValid
+                            ? prev.designationId
+                            : "",
                           projectId: "",
                         }));
 
@@ -624,8 +985,8 @@ boardAccess: boardAccess.filter((id) =>
 
                       {teams.map((team) => (
                         <option
-                          key={team._id}
-                          value={team._id}
+                          key={getId(team)}
+                          value={getId(team)}
                         >
                           {team.teamName}
                         </option>
@@ -641,19 +1002,27 @@ boardAccess: boardAccess.filter((id) =>
                       disabled={
                         !form.teamId ||
                         loading ||
-                        !!fetchError
+                        !!fetchError ||
+                        busy
                       }
                       onChange={(ev) =>
                         set("designationId", ev.target.value)
                       }
                     >
                       <option value="">
-                        Select designation
+                        {!form.teamId
+                          ? "Select team first"
+                          : availableDesignations.length === 0
+                          ? "No designations for this team"
+                          : "Select role / designation"}
                       </option>
 
-                      {availableDesignations.map((d) => (
-                        <option key={d._id} value={d._id}>
-                          {d.name}
+                      {availableDesignations.map((designation) => (
+                        <option
+                          key={getId(designation)}
+                          value={getId(designation)}
+                        >
+                          {getDesignationLabel(designation)}
                         </option>
                       ))}
                     </select>
@@ -664,11 +1033,16 @@ boardAccess: boardAccess.filter((id) =>
 
                     <select
                       value={form.reportingManagerId}
+                      disabled={busy}
                       onChange={(ev) =>
                         set("reportingManagerId", ev.target.value)
                       }
                     >
-                      <option value="">Select manager</option>
+                      <option value="">
+                        {availableManagers.length === 0
+                          ? "No reporting managers available"
+                          : "Select manager"}
+                      </option>
 
                       {availableManagers.map((person) => (
                         <option
@@ -676,7 +1050,10 @@ boardAccess: boardAccess.filter((id) =>
                           value={getId(person)}
                         >
                           {person.name ||
-                            `${person.firstname || ""} ${person.lastname || ""}`}
+                            `${person.firstname || person.firstName || ""} ${
+                              person.lastname || person.lastName || ""
+                            }`.trim()}
+
                           {person.role ? ` — ${person.role}` : ""}
                         </option>
                       ))}
@@ -688,6 +1065,7 @@ boardAccess: boardAccess.filter((id) =>
 
                     <select
                       value={form.projectId}
+                      disabled={busy}
                       onChange={(ev) =>
                         set("projectId", ev.target.value)
                       }
@@ -704,202 +1082,247 @@ boardAccess: boardAccess.filter((id) =>
                       ))}
                     </select>
                   </label>
-
                 </div>
+
+                <label className="employee-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={!!form.isReportingManager}
+                    disabled={busy}
+                    onChange={(ev) =>
+                      set("isReportingManager", ev.target.checked)
+                    }
+                  />
+
+                  <span>Reporting manager</span>
+
+                  <small>
+                    Tick this if the employee can be selected as a
+                    reporting manager for others.
+                  </small>
+                </label>
               </section>
             </>
           )}
 
           {/* STEP 2: FEATURE ACCESS */}
 
-          {/* STEP 2: FEATURE ACCESS */}
+          {step === 2 && (
+            <section className="employee-section">
+              <h3>Feature access</h3>
 
-{step === 2 && (
-  <section className="employee-section">
-    <h3>Feature access</h3>
+              <p className="employee-section-description">
+                Enable the pages this employee is allowed to access.
+              </p>
 
-    <p className="employee-section-description">
-      Enable the pages this employee is allowed to access.
-    </p>
+              {featuresLoading && (
+                <p>Loading available features...</p>
+              )}
 
-    <div className="employee-board-toolbar">
-      <span>Available features</span>
+              {featuresError && (
+                <p className="team-error" role="alert">
+                  {featuresError}
+                </p>
+              )}
 
-      <strong>
-        {Object.values(permissions).filter(Boolean).length}
-        {" "}of {FEATURES.length} enabled
-      </strong>
-    </div>
+              {!featuresLoading &&
+                !featuresError &&
+                features.length === 0 && (
+                  <p>No features returned from the API.</p>
+                )}
 
-    <div className="employee-toggle-list">
-      {FEATURES.map((feature) => {
-        const Icon = feature.icon;
-        const enabled = permissions[feature.key] === true;
+              {!featuresLoading &&
+                !featuresError &&
+                features.length > 0 && (
+                  <>
+                    <div className="employee-board-toolbar">
+                      <span>Available features</span>
 
-        return (
-          <div
-            key={feature.key}
-            className={`employee-toggle-card ${
-              enabled ? "enabled" : ""
-            }`}
-          >
-            <div className="employee-board-icon">
-              <Icon size={21} />
-            </div>
+                      <strong>
+                        {
+                          features.filter(
+                            (feature) =>
+                              permissions[getFeatureCode(feature)]
+                          ).length
+                        }{" "}
+                        of {features.length} enabled
+                      </strong>
+                    </div>
 
-            <div className="employee-toggle-info">
-              <strong>{feature.label}</strong>
+                    <div className="employee-toggle-list">
+                      {features.map((feature) => {
+                        const code = getFeatureCode(feature);
+                        const Icon = getFeatureIcon(feature);
+                        const enabled = permissions[code] === true;
 
-              <span>{feature.description}</span>
-            </div>
+                        return (
+                          <div
+                            key={code}
+                            className={`employee-toggle-card ${
+                              enabled ? "enabled" : ""
+                            }`}
+                          >
+                            <div className="employee-board-icon">
+                              <Icon size={21} />
+                            </div>
 
-            <button
-              type="button"
-              role="switch"
-              aria-checked={enabled}
-              aria-label={`${feature.label} access`}
-              disabled={busy}
-              className={`employee-switch ${
-                enabled ? "on" : ""
-              }`}
-              onClick={() =>
-                togglePermission(feature.key)
-              }
-            >
-              <span />
-            </button>
-          </div>
-        );
-      })}
-    </div>
+                            <div className="employee-toggle-info">
+                              <strong>
+                                {getFeatureName(feature)}
+                              </strong>
 
-    <div className="employee-access-note">
-      <ShieldCheck size={21} />
+                              <span>
+                                {code}
+                              </span>
+                            </div>
 
-      <div>
-        <strong>Permission-based access</strong>
+                            <button
+                              type="button"
+                              role="switch"
+                              aria-checked={enabled}
+                              aria-label={`${getFeatureName(feature)} access`}
+                              disabled={busy}
+                              className={`employee-switch ${
+                                enabled ? "on" : ""
+                              }`}
+                              onClick={() =>
+                                togglePermission(code)
+                              }
+                            >
+                              <span />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
 
-        <p>
-          Only enabled pages will appear in the
-          employee's sidebar. Disabled pages will
-          be restricted.
-        </p>
-      </div>
-    </div>
-  </section>
-)}
+              <div className="employee-access-note">
+                <ShieldCheck size={21} />
+
+                <div>
+                  <strong>Permission-based access</strong>
+
+                  <p>
+                    Only enabled pages should appear in the employee's
+                    sidebar. Disabled pages should be restricted.
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* STEP 3: BOARD ACCESS */}
 
-{step === 3 && (
-  <section className="employee-section">
-    <h3>Board access</h3>
+          {step === 3 && (
+            <section className="employee-section">
+              <h3>Board access</h3>
 
-    <p className="employee-section-description">
-      Choose which task boards this employee
-      is allowed to access.
-    </p>
+              <p className="employee-section-description">
+                Choose which task boards this employee is allowed to access.
+              </p>
 
-    <div className="employee-board-toolbar">
-      <span>
-        {
-          boards.filter((board) =>
-            boardAccess.includes(String(getId(board)))
-          ).length
-        }
-        {" "}of {boards.length} boards enabled
-      </span>
+              <div className="employee-board-toolbar">
+                <span>
+                  {
+                    boards.filter((board) =>
+                      boardAccess.includes(String(getId(board)))
+                    ).length
+                  }{" "}
+                  of {boards.length} boards enabled
+                </span>
 
-      <div>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={selectAllBoards}
-        >
-          Select all
-        </button>
+                <div>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={selectAllBoards}
+                  >
+                    Select all
+                  </button>
 
-        <button
-          type="button"
-          disabled={busy}
-          onClick={clearAllBoards}
-        >
-          Clear
-        </button>
-      </div>
-    </div>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={clearAllBoards}
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
 
-    <div className="employee-toggle-list">
-      {boards.map((board) => {
-        const id = String(getId(board));
-        const enabled = boardAccess.includes(id);
+              <div className="employee-toggle-list">
+                {boards.map((board) => {
+                  const id = String(getId(board));
+                  const enabled = boardAccess.includes(id);
 
-        return (
-          <div
-            key={id}
-            className={`employee-toggle-card ${
-              enabled ? "enabled" : ""
-            }`}
-          >
-            <div className="employee-board-icon">
-              <Kanban size={21} />
-            </div>
+                  return (
+                    <div
+                      key={id}
+                      className={`employee-toggle-card ${
+                        enabled ? "enabled" : ""
+                      }`}
+                    >
+                      <div className="employee-board-icon">
+                        <Kanban size={21} />
+                      </div>
 
-            <div className="employee-toggle-info">
-              <strong>{board.name}</strong>
+                      <div className="employee-toggle-info">
+                        <strong>{board.name}</strong>
 
-              <span>
-                {enabled
-                  ? "Access enabled"
-                  : "Access restricted"}
-              </span>
-            </div>
+                        <span>
+                          {enabled
+                            ? "Access enabled"
+                            : "Access restricted"}
+                        </span>
+                      </div>
 
-            <button
-              type="button"
-              role="switch"
-              aria-checked={enabled}
-              aria-label={`${board.name} access`}
-              disabled={busy}
-              className={`employee-switch ${
-                enabled ? "on" : ""
-              }`}
-              onClick={() => toggleBoard(id)}
-            >
-              <span />
-            </button>
-          </div>
-        );
-      })}
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={enabled}
+                        aria-label={`${board.name} access`}
+                        disabled={busy}
+                        className={`employee-switch ${
+                          enabled ? "on" : ""
+                        }`}
+                        onClick={() => toggleBoard(id)}
+                      >
+                        <span />
+                      </button>
+                    </div>
+                  );
+                })}
 
-      {boards.length === 0 && (
-        <div className="employee-empty-boards">
-          <Kanban size={32} />
+                {boards.length === 0 && (
+                  <div className="employee-empty-boards">
+                    <Kanban size={32} />
 
-          <strong>No task boards available</strong>
+                    <strong>No task boards available</strong>
 
-          <p>
-            Create a board from the sidebar first.
-            Created boards will automatically appear here.
-          </p>
-        </div>
-      )}
-    </div>
+                    <p>
+                      Create a board from the sidebar first.
+                      Created boards will automatically appear here.
+                    </p>
+                  </div>
+                )}
+              </div>
 
-    <div className="employee-access-note">
-      <ShieldCheck size={21} />
+              <div className="employee-access-note">
+                <ShieldCheck size={21} />
 
-      <div>
-        <strong>Board-based access</strong>
+                <div>
+                  <strong>Board-based access</strong>
 
-        <p>
-          Employees can only access the individual
-          boards assigned to them.
-        </p>
-      </div>
-    </div>
-  </section>
-)}
+                  <p>
+                    Employees can only access the individual boards
+                    assigned to them.
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
 
           {error && (
             <p className="employee-wizard-error" role="alert">
@@ -945,7 +1368,8 @@ boardAccess: boardAccess.filter((id) =>
                 busy ||
                 !isAdmin ||
                 loading ||
-                !!fetchError
+                !!fetchError ||
+                (step === 2 && featuresLoading)
               }
             >
               {busy

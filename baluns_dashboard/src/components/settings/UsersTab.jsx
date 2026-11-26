@@ -11,16 +11,29 @@ import DataTable from "../common/DataTable.jsx";
 import StatusBadge from "../common/StatusBadge.jsx";
 import AddUserModal from "./AddUserModal.jsx";
 import CredentialsModal from "./CredentialsModal.jsx";
+import { useEmployees } from "../../context/EmployeesContext.jsx";
+
+const employeeName = (employee) => {
+  const firstName = employee.firstName ?? employee.firstname ?? "";
+  const lastName = employee.lastName ?? employee.lastname ?? "";
+  return `${firstName} ${lastName}`.trim() || employee.username || "";
+};
+
+const designationName = (employee) => {
+  const designation = employee.designation;
+  if (typeof designation === "string") return designation;
+  return designation?.designationName ?? designation?.name ??
+    employee.designationName ?? "";
+};
 
 export default function UsersTab() {
+  const { fetchAccounts } = useEmployees();
   const {
     user,
     token,
     isAdmin,
-    designations = [],
     createUser,
     resetPassword,
-    setUserDesignation,
     setUserActive,
   } = useAuth();
   
@@ -47,7 +60,7 @@ export default function UsersTab() {
   
       try {
         const response = await fetch(
-          `${API_BASE_URL}/v1/employee`,
+          `${API_BASE_URL}/v1/employee/?isAccountPage=true`,
           {
             method: "GET",
             headers: {
@@ -72,19 +85,14 @@ export default function UsersTab() {
   
         const formattedUsers = data.map((employee) => ({
           id: employee._id,
-          name:
-            `${employee.firstname ?? ""} ${employee.lastname ?? ""}`.trim()
-            || employee.username,
+          name: employeeName(employee),
           username: employee.username,
           email: employee.emailaddress,
           phone: employee.phonenumber,
           active: employee.isActive,
           mustChangePassword:
             employee.isPermanentPassword === false,
-          designation:
-            employee.designation?.designationName ?? "",
-          designationId:
-            employee.designation?._id ?? "",
+          designation: designationName(employee),
           team: employee.team?.teamName ?? "",
           teamId: employee.team?._id ?? "",
           createdAt: employee.createdAt,
@@ -108,41 +116,61 @@ export default function UsersTab() {
   
     return () => controller.abort();
   }, [token, isAdmin]);
-  const handleCreate = async (data) => {
-    if (typeof createUser !== "function") {
-      return {
-        ok: false,
-        error: "Create account API is not connected.",
-      };
-    }
   
-    try {
-      const result = await createUser(data);
-  
-      if (result.ok) {
-        setShowAdd(false);
-        setNotice("");
-  
-        if (result.tempPassword) {
-          setCredentials({
-            title: "Account created successfully",
-            name: data.email,
-            email: data.email,
-            password: result.tempPassword,
-          });
-        }
-  
-        // Refresh the user accounts list here.
+const handleCreate = async (data) => {
+  setShowAdd(false);
+  setNotice("");
+
+  // Employee Details reads this shared list for its registered-account picker.
+  await fetchAccounts();
+
+  // Refresh the employee list after successful creation.
+  // The POST response may contain the newly created employee.
+  try {
+    const response = await fetch(`${API_BASE_URL}/v1/employee`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.ok) {
+      const employees = await response.json();
+
+      if (Array.isArray(employees)) {
+        setUsers(
+          employees.map((employee) => ({
+            id: employee._id,
+            name: employeeName(employee),
+            username: employee.username,
+            email: employee.emailaddress,
+            phone: employee.phonenumber,
+            active: employee.isActive,
+            mustChangePassword: employee.isPermanentPassword === false,
+            designation: designationName(employee),
+            team: employee.team?.teamName ?? "",
+            teamId: employee.team?._id ?? "",
+            createdAt: employee.createdAt,
+            updatedAt: employee.updatedAt,
+            role: employee.userType ?? employee.role,
+          }))
+        );
       }
-  
-      return result;
-    } catch (error) {
-      return {
-        ok: false,
-        error: error.message || "Unable to create account.",
-      };
     }
-  };
+  } catch (error) {
+    setNotice("Account created, but employee list could not refresh.");
+  }
+
+  setCredentials({
+    title: "Account created successfully",
+    name: employeeName(data),
+    email: data.emailaddress,
+    password: data.password,
+  });
+
+  return { ok: true };
+};
+
 
   const handleReset = async (person) => {
     if (!window.confirm(`Reset the password for ${person.name}?`)) return;
@@ -184,21 +212,10 @@ export default function UsersTab() {
       key: "designation",
       header: "Designation",
       render: (p) =>
-        p.role === ROLES.ADMIN ? (
-          <strong>{titleOf(p)}</strong>
-        ) : (
-          <select
-            className="designation-select"
-            value={p.designation || ""}
-            aria-label={`Designation for ${p.name}`}
-            onChange={(e) => showError(setUserDesignation(p.id, e.target.value))}
-          >
-            <option value="">{DEFAULT_TITLE}</option>
-            {designations.map((d) => (
-              <option key={d} value={d}>{d}</option>
-            ))}
-          </select>
-        ),
+        <span>
+          {p.designation ||
+            (p.role === ROLES.ADMIN ? titleOf(p) : DEFAULT_TITLE)}
+        </span>,
     },
     {
       key: "status",

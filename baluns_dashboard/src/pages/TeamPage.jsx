@@ -1,9 +1,12 @@
-import { useMemo, useState } from "react";
+
+import { useEffect, useMemo, useRef, useState } from "react";
+
 import {
   Plus,
   Search,
   ChevronLeft,
   ChevronRight,
+  CheckCircle2,
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext.jsx";
@@ -22,31 +25,55 @@ const PAGE_SIZE = 8;
 
 const getId = (item) => item?._id ?? item?.id ?? "";
 
+const getEmployeeCode = (item) =>
+  item?.employeeCode ??
+  item?.empId ??
+  item?.employee_code ??
+  "";
+
 const normalize = (value) =>
   String(value ?? "").trim().toLowerCase();
 
+const mergeEmployee = (base, detail) => {
+  const merged = { ...base };
+
+  Object.entries(detail || {}).forEach(([key, value]) => {
+    if (value !== "" && value !== null && value !== undefined) {
+      merged[key] = value;
+    }
+  });
+
+  return merged;
+};
+
 export default function TeamPage() {
-  // =====================================
-  // CONTEXT
-  // =====================================
-
-  const { isAdmin } = useAuth();
-
   const {
     employees = [],
+    accounts = [],
+    loading = false,
+    error = "",
+
+    accountsLoading = false,
+    accountsError = "",
+
+    // Shared feature API data.
+    features = [],
+    featuresLoading = false,
+    featuresError = "",
+
     saveEmployee,
     removeEmployee,
+    fetchEmployee,
   } = useEmployees();
 
   const { projects = [] } = useProjects();
   const { boards = [] } = useBoards();
 
-  // Temporary until registered accounts API is available
-  const [accounts] = useState([]);
+  const { isAdmin } = useAuth();
 
-  // =====================================
+  // ---------------------------------------
   // STATE
-  // =====================================
+  // ---------------------------------------
 
   const [query, setQuery] = useState("");
   const [team, setTeam] = useState("");
@@ -56,21 +83,38 @@ export default function TeamPage() {
   const [page, setPage] = useState(1);
 
   const [selected, setSelected] = useState(null);
+  const detailRequestId = useRef(0);
   const [editing, setEditing] = useState(undefined);
   const [deleting, setDeleting] = useState(null);
 
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  // =====================================
+  const [notice, setNotice] = useState(null);
+
+  // ---------------------------------------
+  // AUTO-DISMISS SUCCESS POPUP
+  // ---------------------------------------
+
+  useEffect(() => {
+    if (!notice) return;
+
+    const timer = setTimeout(() => {
+      setNotice(null);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  // ---------------------------------------
   // FILTER OPTIONS
-  // =====================================
+  // ---------------------------------------
 
   const opts = (title, values) => [
     { id: "", title },
-    ...values.map((v) => ({
-      id: String(v),
-      title: String(v),
+    ...values.map((value) => ({
+      id: String(value),
+      title: String(value),
     })),
   ];
 
@@ -78,7 +122,7 @@ export default function TeamPage() {
     "All Departments",
     [
       ...new Set(
-        employees.map((e) => e.team).filter(Boolean)
+        employees.map((employee) => employee.team).filter(Boolean)
       ),
     ].sort()
   );
@@ -87,27 +131,27 @@ export default function TeamPage() {
     "All Roles",
     [
       ...new Set(
-        employees.map((e) => e.role).filter(Boolean)
+        employees.map((employee) => employee.role).filter(Boolean)
       ),
     ].sort()
   );
 
   const projectOptions = [
     { id: "", title: "All Projects" },
-
-    ...projects.map((p) => ({
-      id: String(getId(p)),
-      title: p.name,
+    ...projects.map((projectItem) => ({
+      id: String(getId(projectItem)),
+      title: projectItem.name,
     })),
   ];
 
-  // =====================================
+  // ---------------------------------------
   // FILTER EMPLOYEES
-  // =====================================
+  // ---------------------------------------
 
   const filtered = useMemo(() => {
     const selectedProject = projects.find(
-      (p) => String(getId(p)) === String(project)
+      (projectItem) =>
+        String(getId(projectItem)) === String(project)
     );
 
     const allTasks = boards.flatMap((board) =>
@@ -118,11 +162,9 @@ export default function TeamPage() {
     );
 
     return employees.filter((employee) => {
-      // Search filter
-
       const searchText = [
         employee.name,
-        employee.empId || getId(employee),
+        getEmployeeCode(employee),
         employee.email,
         employee.role,
         employee.team,
@@ -131,21 +173,13 @@ export default function TeamPage() {
         .join(" ")
         .toLowerCase();
 
-      const matchesSearch = searchText.includes(
-        normalize(query)
-      );
-
-      // Department filter
+      const matchesSearch = searchText.includes(normalize(query));
 
       const matchesTeam =
         !team || employee.team === team;
 
-      // Designation filter
-
       const matchesRole =
         !role || employee.role === role;
-
-      // Project filter
 
       let matchesProject = !project;
 
@@ -154,19 +188,13 @@ export default function TeamPage() {
           getId(selectedProject)
         );
 
-        // Direct project assignment
-
         const directMatch =
-          String(employee.projectId || "") ===
-            selectedProjectId ||
+          String(employee.projectId || "") === selectedProjectId ||
           employee.project === selectedProject.name;
-
-        // Task-based project assignment
 
         const taskMatch = allTasks.some((task) => {
           const sameProject =
-            String(task.projectId || "") ===
-              selectedProjectId ||
+            String(task.projectId || "") === selectedProjectId ||
             (!task.projectId &&
               task.project === selectedProject.name);
 
@@ -213,11 +241,19 @@ export default function TeamPage() {
         matchesProject
       );
     });
-  }, [employees, projects, boards, query, team, role, project]);
+  }, [
+    employees,
+    projects,
+    boards,
+    query,
+    team,
+    role,
+    project,
+  ]);
 
-  // =====================================
+  // ---------------------------------------
   // PAGINATION
-  // =====================================
+  // ---------------------------------------
 
   const pages = Math.max(
     1,
@@ -236,9 +272,9 @@ export default function TeamPage() {
     setPage(1);
   };
 
-  // =====================================
+  // ---------------------------------------
   // EMPLOYEE ACTIONS
-  // =====================================
+  // ---------------------------------------
 
   const handleAdd = () => {
     if (!isAdmin) return;
@@ -246,11 +282,44 @@ export default function TeamPage() {
     setEditing(null);
   };
 
-  const handleEdit = (employee) => {
+  const handleOpen = async (employee) => {
+    const requestId = ++detailRequestId.current;
+    setSelected(employee);
+
+    try {
+      const detail = await fetchEmployee(getId(employee));
+      if (requestId === detailRequestId.current) {
+        setSelected(mergeEmployee(employee, detail));
+      }
+    } catch (error) {
+      if (requestId === detailRequestId.current) {
+        setNotice(error.message || "Unable to load employee details.");
+      }
+    }
+  };
+
+  const handleCloseDetails = () => {
+    detailRequestId.current += 1;
+    setSelected(null);
+  };
+
+  const handleEdit = async (employee) => {
     if (!isAdmin) return;
 
+    detailRequestId.current += 1;
     setSelected(null);
-    setEditing(employee);
+
+    let full = employee;
+
+    try {
+      const detail = await fetchEmployee(getId(employee));
+
+      full = mergeEmployee(employee, detail);
+    } catch {
+      // Use employee list data if detail request fails.
+    }
+
+    setEditing(full);
   };
 
   const handleDeleteRequest = (employee) => {
@@ -260,7 +329,9 @@ export default function TeamPage() {
     setDeleting(employee);
   };
 
-  // Save employee
+  // ---------------------------------------
+  // SAVE EMPLOYEE
+  // ---------------------------------------
 
   const handleSave = async (data) => {
     if (!isAdmin) {
@@ -270,10 +341,12 @@ export default function TeamPage() {
       };
     }
 
+    const isEdit = Boolean(getId(editing));
+
     try {
       const result = await saveEmployee(data);
 
-      if (result === false || result?.ok === false) {
+      if (result?.ok !== true) {
         return {
           ok: false,
           error: result?.error || "Unable to save employee.",
@@ -282,17 +355,26 @@ export default function TeamPage() {
 
       setEditing(undefined);
 
+      setNotice({
+        title: isEdit ? "Employee updated" : "Employee added",
+
+        message: `${data.name || "The employee"} has been ${
+          isEdit ? "updated" : "added"
+        } successfully.`,
+      });
+
       return { ok: true };
     } catch (error) {
       return {
         ok: false,
-        error:
-          error.message || "Unable to save employee.",
+        error: error.message || "Unable to save employee.",
       };
     }
   };
 
-  // Delete employee
+  // ---------------------------------------
+  // DELETE EMPLOYEE
+  // ---------------------------------------
 
   const handleDelete = async () => {
     if (!isAdmin || !deleting || deleteBusy) return;
@@ -303,13 +385,20 @@ export default function TeamPage() {
     try {
       const result = await removeEmployee(getId(deleting));
 
-      if (result === false || result?.ok === false) {
+      if (result?.ok !== true) {
         throw new Error(
           result?.error || "Unable to delete employee."
         );
       }
 
+      const deletedName = deleting.name;
+
       setDeleting(null);
+
+      setNotice({
+        title: "Employee deleted",
+        message: `${deletedName} has been removed from the directory.`,
+      });
     } catch (error) {
       setDeleteError(
         error.message || "Unable to delete employee."
@@ -319,9 +408,9 @@ export default function TeamPage() {
     }
   };
 
-  // =====================================
+  // ---------------------------------------
   // UI
-  // =====================================
+  // ---------------------------------------
 
   return (
     <div className="team-page">
@@ -356,15 +445,14 @@ export default function TeamPage() {
         {/* FILTER TOOLBAR */}
 
         <div className="team-toolbar">
-
           <div className="team-search">
             <Search size={17} />
 
             <input
               placeholder="Search employees"
               value={query}
-              onChange={(ev) =>
-                change(setQuery)(ev.target.value)
+              onChange={(event) =>
+                change(setQuery)(event.target.value)
               }
             />
           </div>
@@ -386,7 +474,6 @@ export default function TeamPage() {
             options={projectOptions}
             onChange={change(setProject)}
           />
-
         </div>
 
         {/* EMPLOYEE TABLE */}
@@ -396,7 +483,7 @@ export default function TeamPage() {
             employees={visible}
             projects={projects}
             isAdmin={isAdmin}
-            onOpen={setSelected}
+            onOpen={handleOpen}
             onEdit={handleEdit}
             onDelete={handleDeleteRequest}
           />
@@ -419,7 +506,6 @@ export default function TeamPage() {
           </span>
 
           <div className="team-pagination">
-
             <button
               aria-label="Previous page"
               disabled={currentPage === 1}
@@ -428,15 +514,15 @@ export default function TeamPage() {
               <ChevronLeft size={16} />
             </button>
 
-            {Array.from({ length: pages }, (_, i) => (
+            {Array.from({ length: pages }, (_, index) => (
               <button
-                key={i}
+                key={index}
                 className={
-                  currentPage === i + 1 ? "active" : ""
+                  currentPage === index + 1 ? "active" : ""
                 }
-                onClick={() => setPage(i + 1)}
+                onClick={() => setPage(index + 1)}
               >
-                {i + 1}
+                {index + 1}
               </button>
             ))}
 
@@ -447,7 +533,6 @@ export default function TeamPage() {
             >
               <ChevronRight size={16} />
             </button>
-
           </div>
         </div>
       </div>
@@ -456,17 +541,11 @@ export default function TeamPage() {
 
       {selected && (
         <EmployeeDetailModal
-          employee={
-            employees.find(
-              (e) =>
-                String(getId(e)) ===
-                String(getId(selected))
-            ) || selected
-          }
+          employee={selected}
           projects={projects}
           boards={boards}
           isAdmin={isAdmin}
-          onClose={() => setSelected(null)}
+          onClose={handleCloseDetails}
           onEdit={handleEdit}
         />
       )}
@@ -475,9 +554,15 @@ export default function TeamPage() {
 
       {isAdmin && editing !== undefined && (
         <EmployeeFormModal
+          key={getId(editing) || "new-employee"}
           employee={editing}
           employees={employees}
           accounts={accounts}
+          accountsLoading={accountsLoading}
+          accountsError={accountsError}
+          features={features}
+          featuresLoading={featuresLoading}
+          featuresError={featuresError}
           boards={boards}
           projects={projects}
           onClose={() => setEditing(undefined)}
@@ -496,7 +581,7 @@ export default function TeamPage() {
         >
           <div
             className="team-dialog team-confirm"
-            onMouseDown={(ev) => ev.stopPropagation()}
+            onMouseDown={(event) => event.stopPropagation()}
             role="alertdialog"
             aria-modal="true"
             aria-labelledby="delete-employee-title"
@@ -506,8 +591,8 @@ export default function TeamPage() {
             </h2>
 
             <p>
-              Remove <strong>{deleting.name}</strong>{" "}
-              from the employee directory?
+              Remove <strong>{deleting.name}</strong> from the
+              employee directory?
             </p>
 
             {deleteError && (
@@ -517,7 +602,6 @@ export default function TeamPage() {
             )}
 
             <div className="team-dialog-actions">
-
               <button
                 className="team-btn secondary"
                 disabled={deleteBusy}
@@ -531,11 +615,46 @@ export default function TeamPage() {
                 disabled={deleteBusy}
                 onClick={handleDelete}
               >
-                {deleteBusy
-                  ? "Deleting..."
-                  : "Delete employee"}
+                {deleteBusy ? "Deleting..." : "Delete employee"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
 
+      {/* SUCCESS POPUP */}
+
+      {notice && (
+        <div
+          className="team-overlay"
+          onMouseDown={() => setNotice(null)}
+        >
+          <div
+            className="team-dialog team-confirm team-success"
+            onMouseDown={(event) => event.stopPropagation()}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="employee-notice-title"
+          >
+            <div className="team-success-icon">
+              <CheckCircle2 size={28} />
+            </div>
+
+            <h2 id="employee-notice-title">
+              {notice.title}
+            </h2>
+
+            <p>{notice.message}</p>
+
+            <div className="team-dialog-actions">
+              <button
+                type="button"
+                className="team-btn primary"
+                autoFocus
+                onClick={() => setNotice(null)}
+              >
+                OK
+              </button>
             </div>
           </div>
         </div>

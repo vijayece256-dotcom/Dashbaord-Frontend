@@ -10,6 +10,10 @@ import TeamPage from "./pages/TeamPage.jsx";
 import BoardPage from "./pages/BoardPage.jsx";
 import Settings from "./pages/Settings.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
+import Announcements from "./pages/Announcements.jsx";
+import Notifications from "./pages/Notifications.jsx";
+
+
 
 export default function App() {
   return (
@@ -27,6 +31,8 @@ export default function App() {
           <Route path="/analytics" element={<Placeholder title="Analytics" />} />
           <Route path="/boards/:boardId" element={<BoardPage />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/announcements" element={<Announcements />} />
+<Route path="/notifications" element={<Notifications />} />
         </Route>
       </Route>
 
