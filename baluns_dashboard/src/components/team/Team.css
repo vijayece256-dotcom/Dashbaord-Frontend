@@ -233,6 +233,22 @@
   .team-actions button:hover {
     background: #fff0f5;
   }
+
+  :root[data-theme="dark"] .team-actions > div {
+    background: #2c2b41;
+    border-color: #49475e;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, .34);
+  }
+
+  :root[data-theme="dark"] .team-actions button {
+    background: transparent;
+    color: #f4f1f8;
+  }
+
+  :root[data-theme="dark"] .team-actions button:hover {
+    background: #3a3047;
+    color: #ffb0ca;
+  }
   
   .team-empty {
     text-align: center;

@@ -15,11 +15,21 @@
   --grey-900: #1f1f24;
 
   --surface: #ffffff;
-  --app-bg: #e9e9ec;
+  --app-bg: #e9e1eb;
   --panel-bg: var(--grey-100);
+  --border: #e1dbe7;
   --radius-lg: 22px;
   --radius-pill: 999px;
   --font-heading: "Manrope", "Plus Jakarta Sans", system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
 }
 
 /* Keep page titles crisp and confident while body copy stays familiar. */
@@ -95,4 +105,776 @@ button {
 :focus-visible {
   outline: 2px solid var(--burgundy-500);
   outline-offset: 2px;
+}
+
+/* Light theme uses distinct canvas, navigation, and card layers. */
+:root:not([data-theme="dark"]) .content :is(
+  .card, .stat-card, .team-content-card, .projects-card,
+  .tasks-filters, .tasks-table-wrap, .tasks-empty,
+  .kanban-col, .profile-card, .password-card,
+  .profile-security-card, .td-stat, .td-card, .td-team-card,
+  .hold, .delivery-health-card, .team-performance-card,
+  .chart-card, .activity-card, .dashboard-card
+) {
+  background-color: #fff;
+  border: 1px solid #e2dce8;
+  box-shadow: 0 5px 18px rgba(50, 34, 60, .055);
+}
+
+:root:not([data-theme="dark"]) .content :is(
+  .team-table th, .tasks-table th, .projects-table-scroll th,
+  .td-table th, .table th
+) {
+  background-color: #faf9fc;
+  border-color: #e6e0ea;
+}
+
+:root:not([data-theme="dark"]) .content :is(
+  .team-table td, .tasks-table td, .projects-table-scroll td,
+  .td-table td, .table td
+) {
+  border-color: #ece7ef;
+}
+
+/* Theme tokens and shared surfaces keep every page in step with the shell. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --burgundy-900: #240d24;
+  --burgundy-800: #54133e;
+  --burgundy-700: #92265f;
+  --burgundy-500: #e26b9d;
+  --burgundy-300: #d48eaf;
+  --burgundy-100: #432638;
+  --grey-100: #29293a;
+  --grey-300: #49495e;
+  --grey-500: #aaa9bd;
+  --grey-900: #f4f1f8;
+  --surface: #252538;
+  --app-bg: #1d1b2c;
+  --panel-bg: #29283b;
+  --border: #46445b;
+  --surface-hover: #343248;
+}
+
+:root[data-theme="dark"] body {
+  background: var(--app-bg);
+  color: var(--grey-900);
+}
+
+:root[data-theme="dark"] .content {
+  color: var(--grey-900);
+}
+
+:root[data-theme="dark"] .content .team-page,
+:root[data-theme="dark"] .content .projects-page,
+:root[data-theme="dark"] .content .tasks-page,
+:root[data-theme="dark"] .content .settings-page,
+:root[data-theme="dark"] .content .board-page,
+:root[data-theme="dark"] .content .dashboard-page,
+:root[data-theme="dark"] .content .analytics-page {
+  background: transparent;
+  color: var(--grey-900);
+}
+
+/* The page cards keep their established geometry; only their palette changes. */
+:root[data-theme="dark"] .content :is(
+  .team-content-card, .team-table-wrap, .projects-card, .tasks-filters,
+  .tasks-empty, .tasks-table-wrap, .tasks-toggle, .kanban-col,
+  .settings-tab-group, .profile-card, .password-card, .profile-security-card,
+  .board-search, .board-filter-btn, .board-filter-menu, .kanban-filter-menu,
+  .task-card, .card, .stat-card, .dashboard-card, .chart-card,
+  .analytics-card, .activity-card, .project-card, .modal, .modal-content,
+  .team-dialog, .dropdown-menu, .date-picker-popover
+) {
+  background-color: var(--surface);
+  color: var(--grey-900);
+  border-color: var(--border);
+}
+
+:root[data-theme="dark"] .content :is(
+  .team-table th, .projects-table-scroll thead, .projects-table-scroll th,
+  .tasks-table th, .detail-card h4, .detail-toolbar, .settings-tab-button:hover
+) {
+  background-color: var(--panel-bg);
+  color: var(--grey-900);
+}
+
+:root[data-theme="dark"] .content :is(
+  .team-table td, .team-table th, .tasks-table td, .tasks-table th,
+  .projects-card .pagination, .profile-details, .profile-identity,
+  .detail-row, .detail-card, .detail-card h4, .settings-tab-group,
+  .profile-card, .team-content-card
+) {
+  border-color: var(--border);
+}
+
+:root[data-theme="dark"] .content :is(
+  .team-table td, .team-table td strong, .team-person strong,
+  .projects-table-scroll td strong, .tasks-table td, .profile-identity-copy h2,
+  .settings-page h1, .settings-page h2, .settings-page h3,
+  .detail-section-head .modal-label, .detail-card h4, .detail-row,
+  .modal, .team-dialog, .team-dialog label
+) {
+  color: var(--grey-900);
+}
+
+:root[data-theme="dark"] .content :is(
+  .team-heading h1, .tasks-head h2, .board-title, .page-header-title,
+  .projects-page h1, .settings-header h1
+) {
+  color: #fff8fd;
+}
+
+:root[data-theme="dark"] .content :is(
+  .team-heading p, .tasks-head p, .board-sub, .page-header-sub,
+  .team-person small, .profile-details dt, .profile-identity-copy p,
+  .settings-page .muted, .modal-hint
+) {
+  color: #c3bed0;
+}
+
+:root[data-theme="dark"] .content :is(
+  .team-search, .tasks-search, .tasks-filters select, .tasks-filters input,
+  .detail-inline-input, .team-content-card input, .team-content-card select,
+  .modal input, .modal textarea, .modal select, .team-dialog input,
+  .team-dialog textarea, .team-dialog select, .date-picker-trigger,
+  .dropdown-trigger, .search-input
+) {
+  background-color: #1f2031;
+  color: var(--grey-900);
+  border-color: var(--border);
+}
+
+:root[data-theme="dark"] .content :is(input, textarea, select)::placeholder {
+  color: #9d9aaf;
+}
+
+:root[data-theme="dark"] .content :is(
+  .team-table tbody tr:hover, .tasks-table tbody tr:hover,
+  .board-filter-btn:hover, .kanban-filter-chip:hover, .task-card:hover
+) {
+  background-color: #303047;
+}
+
+:root[data-theme="dark"] .content :is(
+  .team-status.active, .status-active, .task-status-pill
+) {
+  color: #8be0b0;
+}
+
+:root[data-theme="dark"] .content .team-page .team-table-wrap {
+  background: transparent;
+}
+
+:root[data-theme="dark"] .content .team-footer {
+  background: var(--surface);
+  color: #c3bed0;
+  border-color: var(--border);
+}
+
+:root[data-theme="dark"] .content .team-pagination button:not(.active) {
+  background: #303047;
+  color: #e7e2f0;
+  border: 1px solid #55536b;
+}
+
+:root[data-theme="dark"] .content .team-pagination button:disabled {
+  color: #aaa6b9;
+  opacity: .8;
+}
+
+/* Retain the warm, textured light canvas; keep the theme transition gentle. */
+body,
+.frame,
+.content,
+.sidebar,
+.topbar,
+.team-content-card,
+.projects-card,
+.tasks-filters,
+.tasks-table-wrap,
+.profile-card,
+.kanban-col {
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+}
+
+/* Dark theme readability across page content and modal portals. */
+:root[data-theme="dark"] :is(h1, h2, h3, h4, h5, h6) {
+  color: #f8f5fc;
+}
+
+:root[data-theme="dark"] :is(
+  .content, .modal, .modal-overlay, .team-dialog, .employee-wizard,
+  .employee-detail-modal, .create-task-form, .account-modal
+) :is(label, .form-label, .modal-label, .team-form-label,
+  .account-field-label, .create-task-label, .employee-form-label,
+  .employee-detail-section-head h3, .team-panel h3, .detail-row label,
+  .detail-section-head .modal-label) {
+  color: #eeeaf5;
+}
+
+:root[data-theme="dark"] :is(
+  .modal, .team-dialog, .employee-wizard, .employee-detail-modal,
+  .account-modal, .modal:has(.create-task-form)
+) {
+  background: #252538;
+  color: #f4f1f8;
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] :is(
+  .team-panel, .employee-detail-section, .detail-card, .detail-comment,
+  .employee-detail-table-wrap, .employee-wizard-footer,
+  .account-modal .account-choice, .secure-first-login
+) {
+  background-color: #2c2b41;
+  color: #f4f1f8;
+  border-color: #4a485f;
+}
+
+:root[data-theme="dark"] :is(
+  .employee-wizard-header p, .employee-wizard-help, .account-modal p,
+  .modal-description, .team-dialog small, .team-panel p,
+  .employee-detail-body p, .employee-detail-section-head p,
+  .create-task-hint, .dropdown-label, .dropdown-placeholder
+) {
+  color: #bcb7ca;
+}
+
+:root[data-theme="dark"] :is(
+  .employee-detail-permissions th, .employee-detail-permissions td,
+  .employee-detail-table th, .employee-detail-table td,
+  .team-panel, .team-form-section, .detail-card, .employee-detail-footer,
+  .employee-wizard-footer, .account-modal .account-choice
+) {
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] :is(
+  .modal input:not([type="checkbox"]):not([type="radio"]),
+  .modal textarea, .modal select, .team-dialog input, .team-dialog select,
+  .team-dialog textarea, .employee-wizard input, .employee-wizard select,
+  .employee-wizard textarea, .create-task-form input,
+  .create-task-form textarea, .create-task-form select,
+  .ct-assignee-trigger, .ct-employee-dropdown, .ct-employee-search,
+  .ct-employee-option,
+  .dropdown-trigger, .dropdown-menu, .dropdown-option
+) {
+  background-color: #1f2031;
+  color: #f4f1f8;
+  border-color: #4b4962;
+}
+
+:root[data-theme="dark"] :is(
+  .dropdown-option:hover, .dropdown-option-active,
+  .employee-wizard-tab:not(.active), .team-pagination button:not(.active)
+) {
+  background-color: #35334b;
+  color: #f7f3fb;
+}
+
+:root[data-theme="dark"] :is(
+  .dropdown-chevron, .dropdown-check, .employee-detail-section-head h3 svg,
+  .team-dialog svg, .employee-wizard svg, .create-task-form svg,
+  .account-modal svg
+) {
+  color: #f08ab0;
+}
+
+:root[data-theme="dark"] .create-task-form .dropdown-trigger,
+:root[data-theme="dark"] .create-task-form .dropdown-menu,
+:root[data-theme="dark"] .create-task-form .dropdown-option {
+  background-color: #1f2031;
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .create-task-form .dropdown-label,
+:root[data-theme="dark"] .create-task-form .create-task-label {
+  color: #eeeaf5;
+}
+
+:root[data-theme="dark"] .create-task-form .modal-actions,
+:root[data-theme="dark"] .employee-wizard-footer {
+  background: #252538;
+}
+
+:root[data-theme="dark"] .ct-placeholder,
+:root[data-theme="dark"] .ct-employee-search input,
+:root[data-theme="dark"] .ct-employee-option,
+:root[data-theme="dark"] .ct-employee-info strong {
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .ct-employee-info small,
+:root[data-theme="dark"] .ct-no-employees {
+  color: #bcb7ca;
+}
+
+:root[data-theme="dark"] .ct-employee-option:hover,
+:root[data-theme="dark"] .ct-employee-option.selected {
+  background: #393249;
+}
+
+/* Teams & Designations settings tab */
+:root[data-theme="dark"] .content .td-page {
+  color: #f4f1f8;
+  background: transparent;
+}
+
+:root[data-theme="dark"] .content :is(.td-stat, .td-card, .td-team-card) {
+  background: #252538;
+  color: #f4f1f8;
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] .content :is(
+  .td-heading h2, .td-card h3, .td-list-heading h3, .td-team-info h3,
+  .td-table td, .td-field label
+) {
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .content .td-stat h3 {
+  color: #f08ab0;
+}
+
+:root[data-theme="dark"] .content :is(
+  .td-heading p, .td-stat span, .td-team-info span,
+  .td-list-heading span, .td-empty
+) {
+  color: #bcb7ca;
+}
+
+:root[data-theme="dark"] .content .td-mode {
+  background: #1f2031;
+}
+
+:root[data-theme="dark"] .content .td-mode button {
+  color: #c8c2d3;
+}
+
+:root[data-theme="dark"] .content .td-mode button.selected {
+  background: #423044;
+  color: #ffb0ca;
+}
+
+:root[data-theme="dark"] .content .td-field input {
+  background: #1f2031;
+  color: #f4f1f8;
+  border-color: #4b4962;
+}
+
+:root[data-theme="dark"] .content .td-field input::placeholder {
+  color: #aaa5ba;
+}
+
+:root[data-theme="dark"] .content .td-table th {
+  background: #2c2b41;
+  color: #c8c2d3;
+}
+
+:root[data-theme="dark"] .content .td-table td {
+  border-color: #49475e;
+}
+
+/* Dashboard: hold-project panel and its list state. */
+:root[data-theme="dark"] .content .hold {
+  --h-ink: #f4f1f8;
+  --h-muted: #bbb7cb;
+  background: #252538;
+  color: #f4f1f8;
+  border-color: #49475e;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .18);
+}
+
+:root[data-theme="dark"] .content .hold-divider {
+  background: #49475e;
+}
+
+:root[data-theme="dark"] .content .hold-head-icon {
+  background: #35304d;
+  color: #a99aff;
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .content .hold-history {
+  background: #2c2b41;
+  color: #eeeaf5;
+  border-color: #514e70;
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .content .hold-history:hover {
+  background: #37344f;
+}
+
+:root[data-theme="dark"] .content .hold-item {
+  background: #2c2b41;
+  color: #f4f1f8;
+  border-color: #49475e;
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .content .hold-details {
+  border-color: #49475e;
+}
+
+/* Project and task lists: include fixed footer rows and sticky table heads. */
+:root[data-theme="dark"] .content :is(
+  .projects-page .projects-card, .projects-card .pagination,
+  .projects-table-scroll thead, .projects-table-scroll th,
+  .tasks-filters, .tasks-empty, .tasks-table-wrap, .tasks-toggle,
+  .tasks-table th, .kanban-col, .kanban-filter-menu,
+  .kanban-filter-chip, .task-card, .page-skeleton-stat,
+  .page-skeleton-toolbar, .page-skeleton-table, .page-skeleton-panel,
+  .page-skeleton-team-card
+) {
+  background-color: #252538;
+  color: #f4f1f8;
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] .content :is(
+  .projects-table-scroll th, .tasks-table th, .tasks-table td,
+  .projects-table-scroll td, .projects-card .pagination,
+  .team-table th, .team-table td
+) {
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] .content :is(
+  .projects-table-scroll td strong, .projects-table-scroll td,
+  .tasks-table td, .tk-title, .kanban-col-head h3,
+  .kanban-filter-chip, .task-card, .task-card-title,
+  .pagination, .pagination button, .projects-card .pagination
+) {
+  color: #eeeaf5;
+}
+
+:root[data-theme="dark"] .content :is(
+  .tasks-filters select, .tasks-filters input, .tasks-search,
+  .tasks-clear, .projects-toolbar .search-input,
+  .board-filter-btn, .kanban-filter-btn, .kanban-filter-chip,
+  .date-picker-trigger, .detail-inline-input
+) {
+  background-color: #1f2031;
+  color: #eeeaf5;
+  border-color: #4b4962;
+}
+
+:root[data-theme="dark"] .content .tasks-table tbody tr:hover,
+:root[data-theme="dark"] .content .projects-table-scroll tbody tr:hover {
+  background: #302f45;
+}
+
+:root[data-theme="dark"] .content .projects-card .pagination {
+  background: #252538 !important;
+  color: #c8c2d3;
+  border-top-color: #49475e;
+}
+
+/* Date picker, project/task dialogs and their nested surfaces. */
+:root[data-theme="dark"] :is(
+  .date-picker-popover, .pd-card, .pd-confirm-dialog,
+  .pf-delete-confirm-dialog, .task-delete-modal, .task-modal,
+  .detail-card, .detail-comment, .ct-employee-dropdown,
+  .ct-employee-search, .ct-assignee-trigger
+) {
+  background: #252538;
+  color: #f4f1f8;
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] :is(
+  .date-picker-head strong, .date-picker-day, .pd-card,
+  .pd-card h3, .pd-confirm-dialog, .pf-delete-confirm-dialog,
+  .task-delete-modal, .detail-row, .detail-comment-text,
+  .detail-section-head .modal-label
+) {
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] :is(
+  .date-picker-day:hover:not(:disabled), .date-picker-nav:hover,
+  .detail-toolbar, .detail-card h4, .pd-bar, .task-card-bottom
+) {
+  background: #302f45;
+}
+
+:root[data-theme="dark"] :is(
+  .pd-select, .pd-textarea, .date-picker-trigger,
+  .date-picker-popover, .detail-inline-input, .ct-assignee-trigger
+) {
+  background-color: #1f2031;
+  color: #f4f1f8;
+  border-color: #4b4962;
+}
+
+:root[data-theme="dark"] .date-picker-weekdays span,
+:root[data-theme="dark"] .date-picker-placeholder,
+:root[data-theme="dark"] .date-picker-chevron,
+:root[data-theme="dark"] .pd-muted,
+:root[data-theme="dark"] .detail-row > span {
+  color: #bcb7ca;
+}
+
+:root[data-theme="dark"] .date-picker-day.is-selected {
+  background: #92265f;
+  color: #fff;
+}
+
+/* Keep page-specific empty/loading states legible on dark surfaces. */
+:root[data-theme="dark"] .content :is(
+  .empty-state, .empty-message, .no-data, .page-skeleton-row--head
+) {
+  color: #c8c2d3;
+  background-color: #2c2b41;
+}
+
+:root[data-theme="dark"] .content .projects-page .projects-card .pagination {
+  background-color: #252538 !important;
+  color: #c8c2d3 !important;
+  border-top: 1px solid #49475e !important;
+}
+
+:root[data-theme="dark"] .content .pagination-buttons button {
+  background: #2c2b41;
+  color: #eeeaf5;
+  border-color: #514e67;
+}
+
+:root[data-theme="dark"] .content .pagination-buttons .pagination-active {
+  background: #92265f;
+  color: #fff;
+  border-color: #92265f;
+}
+
+:root[data-theme="dark"] .page-skeleton {
+  --skeleton-base: #353349;
+  --skeleton-highlight: #49465e;
+}
+
+:root[data-theme="dark"] .page-skeleton-board-column,
+:root[data-theme="dark"] .page-skeleton-board-card {
+  background: #252538;
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] .page-skeleton-row {
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] .page-skeleton-row--head {
+  background: #2c2b41;
+}
+
+:root[data-theme="dark"] .task-card {
+  background: #29283d;
+  border-color: #49475e;
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .task-card h3,
+:root[data-theme="dark"] .task-card h4,
+:root[data-theme="dark"] .pd-confirm-dialog h2,
+:root[data-theme="dark"] .pf-delete-confirm-dialog h2,
+:root[data-theme="dark"] .task-delete-modal h3 {
+  color: #f8f5fc;
+}
+
+:root[data-theme="dark"] .detail-toolbar button,
+:root[data-theme="dark"] .detail-add,
+:root[data-theme="dark"] .date-picker-nav,
+:root[data-theme="dark"] .date-picker-text-btn {
+  color: #f08ab0;
+}
+
+:root[data-theme="dark"] .detail-toolbar button:hover,
+:root[data-theme="dark"] .detail-add:hover {
+  background: #3b3045;
+}
+
+:root[data-theme="dark"] .content :is(
+  .profile-identity-copy h2, .profile-info-item strong,
+  .profile-security-copy strong, .profile-feature-chip,
+  .settings-page .designation-list strong
+) {
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .content :is(
+  .profile-details, .profile-identity, .profile-info-item,
+  .designation-list li
+) {
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] .content :is(
+  .profile-feature-chip, .profile-role, .profile-security-icon
+) {
+  background: #3a2d43;
+  border-color: #574156;
+  color: #ffb0ca;
+}
+
+:root[data-theme="dark"] .content .designation-team {
+  color: #bcb7ca;
+}
+
+:root[data-theme="dark"] .content .designation-select {
+  background: #1f2031;
+  color: #f4f1f8;
+  border-color: #4b4962;
+}
+
+/* Project create/edit modal: employee picker was an unthemed white island. */
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-field > label {
+  color: #eeeaf5;
+}
+
+:root[data-theme="dark"] .modal:has(.project-form-compact) :is(
+  .pf-field > input, .pf-field > select, .pf-employee-control,
+  .pf-employee-dropdown, .pf-employee-search, .pf-employee-option,
+  .pf-delete-confirm-dialog, .pf-cancel
+) {
+  background: #1f2031;
+  color: #f4f1f8;
+  border-color: #4b4962;
+}
+
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-employee-dropdown {
+  background: #252538;
+  border-color: #49475e;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .3);
+}
+
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-employee-search input {
+  background: transparent;
+  color: #f4f1f8;
+  border-color: transparent;
+}
+
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-employee-search input::placeholder,
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-placeholder,
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-employee-info span,
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-employee-id,
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-no-employees {
+  color: #bcb7ca;
+}
+
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-employee-info strong {
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-employee-option:hover,
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-employee-option:has(input:checked) {
+  background: #383249;
+}
+
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-done {
+  background: #493047;
+  color: #ffb0ca;
+}
+
+:root[data-theme="dark"] .modal:has(.project-form-compact) .pf-chip {
+  background: #3a2d43;
+  color: #ffb0ca;
+}
+
+/* Employee form: keep manager names and the manager checkbox label readable. */
+:root[data-theme="dark"] .employee-wizard .employee-form-dropdown .dropdown-trigger {
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-form-dropdown .dropdown-option,
+:root[data-theme="dark"] .employee-wizard .employee-form-dropdown .dropdown-text {
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-form-dropdown .dropdown-label {
+  color: #c8c2d3;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-checkbox span {
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-checkbox small {
+  color: #c4bfd2;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-checkbox input {
+  accent-color: #f08ab0;
+}
+
+/* Project details headings, tabs, and metric accents need brighter contrast. */
+:root[data-theme="dark"] .modal:has(.pd) .pd-head h3,
+:root[data-theme="dark"] .modal:has(.pd) .pd-card h4,
+:root[data-theme="dark"] .modal:has(.pd) .pd-confirm-dialog h3 {
+  color: #fbf8ff;
+}
+
+:root[data-theme="dark"] .modal:has(.pd) .pd-head p,
+:root[data-theme="dark"] .modal:has(.pd) .pd-facts dt,
+:root[data-theme="dark"] .modal:has(.pd) .pd-stats dt,
+:root[data-theme="dark"] .modal:has(.pd) .pd-desc,
+:root[data-theme="dark"] .modal:has(.pd) .pd-hint,
+:root[data-theme="dark"] .modal:has(.pd) .pd-empty,
+:root[data-theme="dark"] .modal:has(.pd) .pd-tabs .pd-tab:not(.is-active) {
+  color: #c4bfd2;
+}
+
+:root[data-theme="dark"] .modal:has(.pd) .pd-tab.is-active {
+  color: #ff9fc2;
+  border-bottom-color: #ff6fa5;
+}
+
+:root[data-theme="dark"] .modal:has(.pd) .pd-tabs,
+:root[data-theme="dark"] .modal:has(.pd) .pd-comment {
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] .modal:has(.pd) .pd-percent {
+  color: #ff9fc2;
+}
+
+:root[data-theme="dark"] .modal:has(.pd) .pd-link {
+  color: #ff9fc2;
+}
+
+:root[data-theme="dark"] .modal:has(.pd) .pd-member-info span,
+:root[data-theme="dark"] .modal:has(.pd) .pd-member-info small,
+:root[data-theme="dark"] .modal:has(.pd) .pd-task span:not(.pd-chip),
+:root[data-theme="dark"] .modal:has(.pd) .pd-comment-meta span,
+:root[data-theme="dark"] .modal:has(.pd) .pd-timeline span {
+  color: #c4bfd2;
+}
+
+:root[data-theme="dark"] .modal:has(.pd) .pd-status--primary {
+  background: #493047;
+  color: #ffb0ca;
+}
+
+/* Remaining light-only dialogs and utility surfaces found in the CSS audit. */
+:root[data-theme="dark"] :is(.td-delete-modal, .pf-delete-confirm-dialog, .pd-confirm-dialog) {
+  background: #252538;
+  color: #f4f1f8;
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] .td-delete-modal :is(h3, p, p strong) {
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .td-modal-cancel,
+:root[data-theme="dark"] .pd-upload-btn,
+:root[data-theme="dark"] .detail-close {
+  background: #2c2b41;
+  color: #eeeaf5;
+  border-color: #514e67;
+}
+
+:root[data-theme="dark"] .td-modal-cancel:hover,
+:root[data-theme="dark"] .detail-close:hover {
+  background: #39364f;
 }

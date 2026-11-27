@@ -111,6 +111,32 @@
   .employee-full-width {
     grid-column: 1 / -1;
   }
+
+  .employee-account-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .employee-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .employee-form-field-label {
+    color: #302634;
+  }
+
+  :root[data-theme="dark"] .employee-wizard .employee-form-field-label {
+    color: #eeeaf5;
+  }
   
   .employee-full-width small {
     color: #918798;
@@ -401,6 +427,85 @@
       margin-left: auto;
     }
   }
+
+/* Employee wizard dark mode surfaces for feature and board access. */
+:root[data-theme="dark"] .employee-wizard .employee-toggle-card,
+:root[data-theme="dark"] .employee-wizard .employee-board-card {
+  background: #2c2b41;
+  border-color: #49475e;
+  color: #f4f1f8;
+  box-shadow: none;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-toggle-card.enabled,
+:root[data-theme="dark"] .employee-wizard .employee-board-card.selected {
+  background: #382c43;
+  border-color: #86516b;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-toggle-card:hover,
+:root[data-theme="dark"] .employee-wizard .employee-board-card:hover {
+  border-color: #bd6f91;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-toggle-info strong,
+:root[data-theme="dark"] .employee-wizard .employee-board-info strong,
+:root[data-theme="dark"] .employee-wizard .employee-empty-boards strong {
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-toggle-info span,
+:root[data-theme="dark"] .employee-wizard .employee-board-info span,
+:root[data-theme="dark"] .employee-wizard .employee-empty-boards p,
+:root[data-theme="dark"] .employee-wizard .employee-board-toolbar {
+  color: #c4bfd2;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-board-toolbar strong,
+:root[data-theme="dark"] .employee-wizard .employee-board-toolbar button {
+  color: #ff9fc2;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-board-icon,
+:root[data-theme="dark"] .employee-wizard .employee-empty-boards {
+  background: #3a2d43;
+  border-color: #51465d;
+  color: #ff9fc2;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-access-note {
+  background: #2c2b41;
+  color: #f4f1f8;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-access-note p {
+  color: #c4bfd2;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-switch {
+  background: #514e67;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-switch.on {
+  background: #a8346c;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-permission-scroll {
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-permission-table th {
+  background: #2c2b41;
+  color: #c4bfd2;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-permission-table td {
+  border-color: #49475e;
+}
+
+:root[data-theme="dark"] .employee-wizard .employee-permission-table tbody tr:hover {
+  background: #302f45;
+}
   /* =========================================
    FEATURE AND BOARD TOGGLE ACCESS
 ========================================= */

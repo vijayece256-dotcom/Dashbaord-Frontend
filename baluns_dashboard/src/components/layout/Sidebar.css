@@ -1,11 +1,39 @@
 .sidebar {
-    background: var(--panel-bg);
+    background: #e5dfeb;
+    border: 1px solid #d9d1e1;
     border-radius: var(--radius-lg);
     padding: 22px 0;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
   }
+
+  :root[data-theme="dark"] .sidebar {
+    background: #242438;
+    border-color: #242438;
+  }
+
+  :root[data-theme="dark"] .sidebar .brand,
+  :root[data-theme="dark"] .sidebar .nav a,
+  :root[data-theme="dark"] .sidebar .nav-btn {
+    color: #eee7f2;
+  }
+
+  :root[data-theme="dark"] .sidebar .menu-label { color: #c0b2c7; }
+  :root[data-theme="dark"] .sidebar .nav a:hover,
+  :root[data-theme="dark"] .sidebar .nav a.active { color: #fff; }
+  :root[data-theme="dark"] .sidebar .nav a.active { background: rgba(255, 255, 255, 0.08); }
+  :root[data-theme="dark"] .sidebar .nav a svg,
+  :root[data-theme="dark"] .sidebar .nav-btn svg,
+  :root[data-theme="dark"] .sidebar .boards-head svg,
+  :root[data-theme="dark"] .sidebar .sidebar-board-delete svg {
+    color: #ded9ed;
+    stroke: currentColor;
+    opacity: 1;
+  }
+  :root[data-theme="dark"] .sidebar .nav a.active svg { color: #ff8ab5; }
+  :root[data-theme="dark"] .sidebar .nav a:hover svg,
+  :root[data-theme="dark"] .sidebar .nav-btn:hover svg { color: #fff; }
   
   .brand {
     padding: 0 22px 24px;

@@ -1,5 +1,7 @@
 import Avatar from "../common/Avatar.jsx";
+import { Moon, Sun } from "lucide-react";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { useTheme } from "../../context/ThemeContext.jsx";
 import { titleOf } from "../../data/roles.js";
 import "./Topbar.css";
 
@@ -12,6 +14,7 @@ function getGreeting() {
 
 export default function Topbar() {
   const { user: currentUser } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <header className="topbar">
@@ -24,11 +27,22 @@ export default function Topbar() {
         </p>
       </div>
 
-      <div className="user">
-        <Avatar name={currentUser.name} src={currentUser.avatar} size="lg" />
-        <div>
-          <div className="user-name">{currentUser.name}</div>
-          <div className="user-role">{titleOf(currentUser)}</div>
+      <div className="topbar-actions">
+        <button
+          type="button"
+          className="theme-toggle"
+          onClick={toggleTheme}
+          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+        >
+          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+        </button>
+        <div className="user">
+          <Avatar name={currentUser.name} src={currentUser.avatar} size="lg" />
+          <div>
+            <div className="user-name">{currentUser.name}</div>
+            <div className="user-role">{titleOf(currentUser)}</div>
+          </div>
         </div>
       </div>
     </header>

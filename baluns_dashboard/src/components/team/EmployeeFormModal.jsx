@@ -835,8 +835,10 @@ export default function EmployeeFormModal({
                 <h3>Personal information</h3>
 
                 <div className="team-form-grid">
-                  <label className="employee-full-width">
-                    Link existing user account
+                  <div className="employee-full-width employee-account-field">
+                    <span className="employee-form-field-label">
+                      Link existing user account
+                    </span>
 
                     <Dropdown
                       compact
@@ -868,7 +870,7 @@ export default function EmployeeFormModal({
                       Create login accounts in Settings first.
                       Select an account to autofill its details.
                     </small>
-                  </label>
+                  </div>
 
                   <label>
                     First name
@@ -933,8 +935,10 @@ export default function EmployeeFormModal({
                     />
                   </label>
 
-                  <label>
-                    Account status
+                  <div className="employee-form-field">
+                    <span className="employee-form-field-label">
+                      Account status
+                    </span>
 
                     <Dropdown
                       compact
@@ -947,7 +951,7 @@ export default function EmployeeFormModal({
                         { id: "inactive", title: "Inactive" },
                       ]}
                     />
-                  </label>
+                  </div>
                 </div>
               </section>
 
@@ -959,8 +963,10 @@ export default function EmployeeFormModal({
                 )}
 
                 <div className="team-form-grid">
-                  <label>
-                    Department / Team
+                  <div className="employee-form-field">
+                    <span className="employee-form-field-label">
+                      Department / Team
+                    </span>
 
                     <Dropdown
                       compact
@@ -1004,10 +1010,12 @@ export default function EmployeeFormModal({
                         })),
                       ]}
                     />
-                  </label>
+                  </div>
 
-                  <label>
-                    Role / Designation
+                  <div className="employee-form-field">
+                    <span className="employee-form-field-label">
+                      Role / Designation
+                    </span>
 
                     <Dropdown
                       compact
@@ -1035,10 +1043,12 @@ export default function EmployeeFormModal({
                         })),
                       ]}
                     />
-                  </label>
+                  </div>
 
-                  <label>
-                    Reporting manager
+                  <div className="employee-form-field">
+                    <span className="employee-form-field-label">
+                      Reporting manager
+                    </span>
 
                     <Dropdown
                       compact
@@ -1059,10 +1069,12 @@ export default function EmployeeFormModal({
                         })),
                       ]}
                     />
-                  </label>
+                  </div>
 
-                  <label>
-                    Current project
+                  <div className="employee-form-field">
+                    <span className="employee-form-field-label">
+                      Current project
+                    </span>
 
                     <Dropdown
                       compact
@@ -1078,7 +1090,7 @@ export default function EmployeeFormModal({
                         })),
                       ]}
                     />
-                  </label>
+                  </div>
                 </div>
 
                 <label className="employee-checkbox">
