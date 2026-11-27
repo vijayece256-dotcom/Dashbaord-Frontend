@@ -18,6 +18,7 @@ import Dropdown from "../components/common/Dropdown.jsx";
 import EmployeeTable from "../components/team/EmployeeTable.jsx";
 import EmployeeDetailModal from "../components/team/EmployeeDetailModal.jsx";
 import EmployeeFormModal from "../components/team/EmployeeFormModal.jsx";
+import PageSkeleton from "../components/common/PageSkeleton.jsx";
 
 import "./TeamPage.css";
 
@@ -411,6 +412,8 @@ export default function TeamPage() {
   // ---------------------------------------
   // UI
   // ---------------------------------------
+
+  if (loading) return <PageSkeleton variant="team" />;
 
   return (
     <div className="team-page">

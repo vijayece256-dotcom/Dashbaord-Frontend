@@ -108,6 +108,35 @@
       border-color 0.2s ease,
       box-shadow 0.2s ease;
   }
+
+  .pf-field > .project-form-dropdown {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pf-field > .project-form-date {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pf-field > .project-form-dropdown .dropdown-trigger {
+    width: 100%;
+    height: 42px;
+    padding: 0 13px;
+    border-color: #e9e2ea;
+    border-radius: 10px;
+    font: inherit;
+    font-weight: 400;
+  }
+
+  .pf-field > .project-form-date .date-picker-trigger {
+    height: 42px;
+    border-color: #e9e2ea;
+    border-radius: 10px;
+    font-size: 13px;
+  }
   
   .pf-field > input:focus,
   .pf-field > select:focus {
@@ -525,30 +554,15 @@
   
   /* DELETE CONFIRMATION */
   
-  .pf-delete-confirm {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-  
-    margin-top: 12px;
-    padding: 12px;
-  
-    background: #fff1f3;
-    border-radius: 9px;
-  
-    font-size: 12px;
-  }
-  
-  .pf-delete-confirm button {
-    padding: 6px 10px;
-  
-    border: 1px solid #e6b6c2;
-    border-radius: 7px;
-  
-    background: #fff;
-    cursor: pointer;
-  }
+  .pf-delete-confirm-overlay { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 16px; background: rgba(31, 24, 30, .48); }
+  .pf-delete-confirm-dialog { width: min(420px, 100%); box-sizing: border-box; padding: 24px; border: 1px solid #e9e2ea; border-radius: 16px; background: #fff; box-shadow: 0 20px 60px rgba(31, 24, 30, .22); }
+  .pf-delete-confirm-dialog h3 { margin: 0 0 10px; color: #302936; font-size: 18px; }
+  .pf-delete-confirm-dialog > p { margin: 0; color: #706875; font-size: 13px; line-height: 1.55; }
+  .pf-delete-confirm-dialog > .pf-form-error { margin-top: 12px; color: #bd304f; }
+  .pf-delete-confirm-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+  .pf-delete-confirm-actions button { padding: 9px 14px; border: 1px solid #e9e2ea; border-radius: 8px; font: inherit; cursor: pointer; }
+  .pf-delete-confirm-actions button:disabled { opacity: .6; cursor: not-allowed; }
+  .pf-delete-confirm-button { background: #a52345; border-color: #a52345 !important; color: #fff; }
   
   /* ==========================================
      RESPONSIVE
@@ -575,6 +589,8 @@
     .pf-field > select {
       height: 40px;
     }
+
+    .pf-field > .project-form-date .date-picker-trigger { height: 40px; }
   
     .pf-employee-options {
       max-height: 160px;

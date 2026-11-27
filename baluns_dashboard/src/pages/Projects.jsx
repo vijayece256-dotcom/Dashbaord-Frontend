@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Layers,
   CalendarClock,
@@ -9,9 +9,10 @@ import {
   Plus,
   ChevronRight,
 } from "lucide-react";
-import { generateDummyEmployees } from "../data/dummyEmployees.js";
 import { useProjects } from "../context/ProjectsContext.jsx";
 import { useBoards } from "../context/BoardsContext.jsx";
+import { useEmployees } from "../context/EmployeesContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { PROJECT_STATUSES, statusById } from "../data/projectStatus.js";
 import { taskStatsByProject, progressOf } from "../utils/projectStats.js";
 import { formatDate } from "../utils/format.js";
@@ -30,6 +31,7 @@ import Pagination from "../components/common/Pagination.jsx";
 
 import ProjectModal from "../components/projects/ProjectModal.jsx";
 import ProjectFormModal from "../components/projects/ProjectFormModal.jsx";
+import PageSkeleton from "../components/common/PageSkeleton.jsx";
 
 import "./Projects.css";
 
@@ -47,16 +49,20 @@ const toOptions = (values) => [
 export default function Projects() {
   const {
     projects = [],
+    teams = [],
+    loading,
+    error,
     addProject,
     updateProject,
     deleteProject,
+    getProject,
+    addProjectComment,
+    getProjectActivity,
   } = useProjects();
 
   const { boards = [] } = useBoards();
-  const employees = useMemo(
-    () => generateDummyEmployees(boards),
-    [boards]
-  );
+  const { employees = [] } = useEmployees();
+  const { isAdmin } = useAuth();
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState({
     status: ALL,
@@ -72,6 +78,8 @@ export default function Projects() {
 
   // Form modal: "new", project object, or null
   const [editingProject, setEditingProject] = useState(null);
+  const [actionError, setActionError] = useState("");
+  const detailRequestId = useRef(0);
 
   const taskStats = useMemo(
     () => taskStatsByProject(boards),
@@ -98,7 +106,7 @@ export default function Projects() {
 
         const matchesSearch =
           !q ||
-          String(p.id ?? "").toLowerCase().includes(q) ||
+          String(p.projectID ?? p.id ?? "").toLowerCase().includes(q) ||
           String(p.name ?? "").toLowerCase().includes(q);
 
         if (!matchesSearch) return false;
@@ -131,59 +139,73 @@ export default function Projects() {
     setPage(1);
   };
 
-  const teamNames = useMemo(
-    () =>
-      [
-        ...new Set([
-          ...boards.map((b) => b?.name).filter(Boolean),
-          ...unique(projects, "team"),
-        ]),
-      ].sort(),
-    [boards, projects]
-  );
-
   const openCreate = () => {
+    detailRequestId.current += 1;
+    setActionError("");
     setSelectedProject(null);
     setEditingProject("new");
   };
 
-  const openDetails = (project) => {
+  const openDetails = async (project) => {
     if (!project) return;
+    const requestId = ++detailRequestId.current;
+    setActionError("");
     setEditingProject(null);
     setSelectedProject(project);
-  };
-
-  const openEdit = (project) => {
-    if (!project) return;
-    setSelectedProject(null);
-    setEditingProject(project);
-  };
-
-  const saveProject = (data) => {
-    if (editingProject === "new") {
-      addProject(data);
-    } else if (editingProject?.id) {
-      updateProject(editingProject.id, data);
+    try {
+      const detail = await getProject(project.id);
+      if (requestId === detailRequestId.current) setSelectedProject(detail);
+    } catch (err) {
+      setActionError(err.message || "Unable to load project details.");
     }
+  };
 
+  const openEdit = async (project) => {
+    if (!project) return;
+    const requestId = ++detailRequestId.current;
+    setActionError("");
+    try {
+      const detail = await getProject(project.id);
+      if (requestId === detailRequestId.current) {
+        setSelectedProject(null);
+        setEditingProject(detail);
+      }
+    } catch (err) {
+      setActionError(err.message || "Unable to load project details.");
+    }
+  };
+
+  const saveProject = async (data) => {
+    setActionError("");
+    if (editingProject === "new") {
+      await addProject(data);
+    } else if (editingProject?.id) {
+      await updateProject(editingProject.id, data);
+    }
     setEditingProject(null);
   };
 
-  const removeProject = () => {
+  const removeProject = async () => {
     if (
       editingProject &&
       editingProject !== "new" &&
       editingProject.id
     ) {
-      deleteProject(editingProject.id);
+      try {
+        await deleteProject(editingProject.id);
+        setEditingProject(null);
+      } catch (err) {
+        setActionError(err.message || "Unable to delete project.");
+        throw err;
+      }
+      return;
     }
-
     setEditingProject(null);
   };
 
   const columns = [
     {
-      key: "id",
+      key: "projectID",
       header: "Project ID",
     },
     {
@@ -270,6 +292,8 @@ export default function Projects() {
     },
   ];
 
+  if (loading) return <PageSkeleton variant="projects" />;
+
   return (
     <div className="projects-page">
       <PageHeader
@@ -280,6 +304,12 @@ export default function Projects() {
           Create project
         </Button>
       </PageHeader>
+
+      {(error || actionError) && (
+        <p className="settings-notice" role="alert">
+          {actionError || error}
+        </p>
+      )}
 
       <StatGrid>
         <StatCard
@@ -371,7 +401,9 @@ export default function Projects() {
     rows={visible}
     onRowClick={openDetails}
     emptyText={
-      projects.length === 0
+      loading
+        ? "Loading projects..."
+        : projects.length === 0
         ? "No projects yet. Click Create project to add one."
         : "No projects match your search or filters."
     }
@@ -393,11 +425,20 @@ export default function Projects() {
         employees={employees}
         tasks={allTasks}
         onUpdateProject={updateProject}
+        onAddComment={addProjectComment}
+        onLoadActivity={getProjectActivity}
+        onDelete={isAdmin ? async (projectId) => {
+          await deleteProject(projectId);
+          detailRequestId.current += 1;
+          setSelectedProject(null);
+        } : undefined}
         onEdit={() => {
-          setModal(selectedProject);
+          openEdit(selectedProject);
+        }}
+        onClose={() => {
+          detailRequestId.current += 1;
           setSelectedProject(null);
         }}
-        onClose={() => setSelectedProject(null)}
       />
       )}
 
@@ -413,7 +454,7 @@ export default function Projects() {
               ? null
               : editingProject
           }
-          teams={teamNames}
+          teams={teams}
           employees={employees}
           onSave={saveProject}
           onDelete={removeProject}

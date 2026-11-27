@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { API_BASE_URL } from "../../config/env.js";
 import { useAuth } from "../../context/AuthContext.jsx";
+import Dropdown from "../common/Dropdown.jsx";
 
 import "./EmployeeFormModal.css";
 
@@ -35,6 +36,7 @@ const FEATURE_ICONS = {
   tasks: ListChecks,
   projects: FolderKanban,
   team: Users,
+  "employee details": Users,
   analytics: ChartNoAxesCombined,
   notifications: Bell,
   announcements: Megaphone,
@@ -59,8 +61,24 @@ const getFeatureCode = (item) => {
   return String(item ?? "");
 };
 
-const getFeatureName = (feature) =>
-  feature?.featureName ?? feature?.name ?? "Unnamed feature";
+const getFeatureName = (feature) => {
+  const name = feature?.featureName ?? feature?.name ?? "Unnamed feature";
+  const normalizedName = String(name).trim().toLowerCase();
+  const normalizedCode = getFeatureCode(feature)
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]/g, "");
+
+  if (
+    normalizedName === "team" ||
+    normalizedCode === "team" ||
+    normalizedCode === "employeedetails"
+  ) {
+    return "Employee Details";
+  }
+
+  return name;
+};
 
 const getFeatureIcon = (feature) => {
   const normalizedName = getFeatureName(feature)
@@ -820,28 +838,25 @@ export default function EmployeeFormModal({
                   <label className="employee-full-width">
                     Link existing user account
 
-                    <select
+                    <Dropdown
+                      compact
+                      className="employee-form-dropdown"
                       value={form.userId || ""}
-                      onChange={(ev) =>
-                        selectAccount(ev.target.value)
-                      }
+                      onChange={selectAccount}
                       disabled={!!employee || busy || accountsLoading}
-                    >
-                      <option value="">
-                        {accountsLoading
-                          ? "Loading accounts..."
-                          : "Select registered account"}
-                      </option>
-
-                      {accounts.map((account) => (
-                        <option
-                          key={getId(account)}
-                          value={getId(account)}
-                        >
-                          {getEmail(account)}
-                        </option>
-                      ))}
-                    </select>
+                      options={[
+                        {
+                          id: "",
+                          title: accountsLoading
+                            ? "Loading accounts..."
+                            : "Select registered account",
+                        },
+                        ...accounts.map((account) => ({
+                          id: getId(account),
+                          title: getEmail(account),
+                        })),
+                      ]}
+                    />
 
                     {accountsError && (
                       <small className="team-error">
@@ -921,16 +936,17 @@ export default function EmployeeFormModal({
                   <label>
                     Account status
 
-                    <select
+                    <Dropdown
+                      compact
+                      className="employee-form-dropdown"
                       value={form.status}
-                      onChange={(ev) =>
-                        set("status", ev.target.value)
-                      }
+                      onChange={(value) => set("status", value)}
                       disabled={busy}
-                    >
-                      <option value="active">Active</option>
-                      <option value="inactive">Inactive</option>
-                    </select>
+                      options={[
+                        { id: "active", title: "Active" },
+                        { id: "inactive", title: "Inactive" },
+                      ]}
+                    />
                   </label>
                 </div>
               </section>
@@ -946,11 +962,12 @@ export default function EmployeeFormModal({
                   <label>
                     Department / Team
 
-                    <select
+                    <Dropdown
+                      compact
+                      className="employee-form-dropdown"
                       value={form.teamId}
                       disabled={loading || !!fetchError || busy}
-                      onChange={(ev) => {
-                        const teamId = ev.target.value;
+                      onChange={(teamId) => {
 
                         const currentDesignation =
                           designations.find(
@@ -976,28 +993,25 @@ export default function EmployeeFormModal({
 
                         setError("");
                       }}
-                    >
-                      <option value="">
-                        {loading
-                          ? "Loading teams..."
-                          : "Select team"}
-                      </option>
-
-                      {teams.map((team) => (
-                        <option
-                          key={getId(team)}
-                          value={getId(team)}
-                        >
-                          {team.teamName}
-                        </option>
-                      ))}
-                    </select>
+                      options={[
+                        {
+                          id: "",
+                          title: loading ? "Loading teams..." : "Select team",
+                        },
+                        ...teams.map((team) => ({
+                          id: getId(team),
+                          title: team.teamName,
+                        })),
+                      ]}
+                    />
                   </label>
 
                   <label>
                     Role / Designation
 
-                    <select
+                    <Dropdown
+                      compact
+                      className="employee-form-dropdown"
                       value={form.designationId}
                       disabled={
                         !form.teamId ||
@@ -1005,82 +1019,65 @@ export default function EmployeeFormModal({
                         !!fetchError ||
                         busy
                       }
-                      onChange={(ev) =>
-                        set("designationId", ev.target.value)
-                      }
-                    >
-                      <option value="">
-                        {!form.teamId
+                      onChange={(value) => set("designationId", value)}
+                      options={[
+                        {
+                          id: "",
+                          title: !form.teamId
                           ? "Select team first"
                           : availableDesignations.length === 0
                           ? "No designations for this team"
-                          : "Select role / designation"}
-                      </option>
-
-                      {availableDesignations.map((designation) => (
-                        <option
-                          key={getId(designation)}
-                          value={getId(designation)}
-                        >
-                          {getDesignationLabel(designation)}
-                        </option>
-                      ))}
-                    </select>
+                          : "Select role / designation",
+                        },
+                        ...availableDesignations.map((designation) => ({
+                          id: getId(designation),
+                          title: getDesignationLabel(designation),
+                        })),
+                      ]}
+                    />
                   </label>
 
                   <label>
                     Reporting manager
 
-                    <select
+                    <Dropdown
+                      compact
+                      className="employee-form-dropdown"
                       value={form.reportingManagerId}
                       disabled={busy}
-                      onChange={(ev) =>
-                        set("reportingManagerId", ev.target.value)
-                      }
-                    >
-                      <option value="">
-                        {availableManagers.length === 0
-                          ? "No reporting managers available"
-                          : "Select manager"}
-                      </option>
-
-                      {availableManagers.map((person) => (
-                        <option
-                          key={getId(person)}
-                          value={getId(person)}
-                        >
-                          {person.name ||
-                            `${person.firstname || person.firstName || ""} ${
-                              person.lastname || person.lastName || ""
-                            }`.trim()}
-
-                          {person.role ? ` — ${person.role}` : ""}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => set("reportingManagerId", value)}
+                      options={[
+                        {
+                          id: "",
+                          title: availableManagers.length === 0
+                            ? "No reporting managers available"
+                            : "Select manager",
+                        },
+                        ...availableManagers.map((person) => ({
+                          id: getId(person),
+                          title: `${person.name || `${person.firstname || person.firstName || ""} ${person.lastname || person.lastName || ""}`.trim()}${person.role ? ` — ${person.role}` : ""}`,
+                        })),
+                      ]}
+                    />
                   </label>
 
                   <label>
                     Current project
 
-                    <select
+                    <Dropdown
+                      compact
+                      className="employee-form-dropdown"
                       value={form.projectId}
                       disabled={busy}
-                      onChange={(ev) =>
-                        set("projectId", ev.target.value)
-                      }
-                    >
-                      <option value="">No project</option>
-
-                      {availableProjects.map((project) => (
-                        <option
-                          key={getId(project)}
-                          value={getId(project)}
-                        >
-                          {project.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(value) => set("projectId", value)}
+                      options={[
+                        { id: "", title: "No project" },
+                        ...availableProjects.map((project) => ({
+                          id: getId(project),
+                          title: project.name,
+                        })),
+                      ]}
+                    />
                   </label>
                 </div>
 

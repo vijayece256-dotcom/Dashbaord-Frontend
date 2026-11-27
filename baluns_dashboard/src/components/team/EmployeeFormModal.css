@@ -131,6 +131,20 @@
     color: #302634;
     transition: border-color 0.2s;
   }
+
+  .employee-wizard .employee-form-dropdown {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .employee-wizard .employee-form-dropdown .dropdown-trigger {
+    width: 100%;
+    height: 44px;
+    border-color: #e2e2e6;
+    border-radius: 10px;
+    font-weight: 400;
+  }
   
   .employee-wizard .team-form-grid input:focus,
   .employee-wizard .team-form-grid select:focus {

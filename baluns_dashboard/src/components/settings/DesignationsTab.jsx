@@ -3,6 +3,9 @@ import { useEffect, useState, useRef } from "react";
 import { Plus, Users, Briefcase, Trash2 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { API_BASE_URL } from "../../config/env.js";
+import PageSkeleton from "../common/PageSkeleton.jsx";
+import Dropdown from "../common/Dropdown.jsx";
+import { waitForMinimumLoading } from "../../utils/minimumLoadingTime.js";
 import "./DesignationsTab.css";
 
 export default function DesignationsTab() {
@@ -91,6 +94,7 @@ const getArray = (response, key) => {
   // Load teams, designations and employees
 // Load teams, designations and employees
 const loadData = async () => {
+  const loadingStartedAt = Date.now();
   setLoading(true);
   setFetchError("");
 
@@ -120,6 +124,7 @@ const loadData = async () => {
   } catch (err) {
     setFetchError(err.message);
   } finally {
+    await waitForMinimumLoading(loadingStartedAt);
     setLoading(false);
   }
 };
@@ -365,22 +370,21 @@ const getDesignations = (id) =>
             </label>
 
             {mode === "existing" ? (
-              <select
-                id="td-team"
+              <Dropdown
+                compact
+                className="td-team-dropdown"
                 value={teamId}
-                onChange={(e) => setTeamId(e.target.value)}
-                required
-              >
-                <option value="">Select a team</option>
-
-                {teams
-  .filter((team) => team.isActive !== false)
-  .map((team) => (
-    <option key={team._id} value={team._id}>
-      {team.teamName || team.name}
-    </option>
-  ))}
-              </select>
+                onChange={setTeamId}
+                options={[
+                  { id: "", title: "Select a team" },
+                  ...teams
+                    .filter((team) => team.isActive !== false)
+                    .map((team) => ({
+                      id: team._id,
+                      title: team.teamName || team.name,
+                    })),
+                ]}
+              />
             ) : (
               <input
                 id="td-team"
@@ -434,7 +438,7 @@ const getDesignations = (id) =>
       </div>
 
       {loading ? (
-        <div className="td-empty">Loading teams...</div>
+        <PageSkeleton variant="team-list" />
       ) : fetchError ? (
         <div className="td-error">
           {fetchError}

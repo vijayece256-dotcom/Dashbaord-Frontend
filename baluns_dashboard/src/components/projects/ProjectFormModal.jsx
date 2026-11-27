@@ -2,6 +2,8 @@
 import { useMemo, useState } from "react";
 import { X, Search } from "lucide-react";
 import Modal from "../common/Modal.jsx";
+import Dropdown from "../common/Dropdown.jsx";
+import DatePicker from "../common/DatePicker.jsx";
 import { PROJECT_STATUSES } from "../../data/projectStatus.js";
 import "./ProjectFormModal.css";
 
@@ -11,6 +13,7 @@ const EMPTY = {
   owner: "",
   department: "",
   team: "",
+  teamId: "",
   startDate: "",
   endDate: "",
   status: "upcoming",
@@ -35,6 +38,7 @@ export default function ProjectFormModal({
   }));
 
   const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
   const [employeeOpen, setEmployeeOpen] = useState(false);
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -84,8 +88,9 @@ const filteredEmployees = useMemo(() => {
     form.memberIds.includes(e.id)
   );
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
+    if (saving) return;
 
     const nextErrors = {};
 
@@ -95,7 +100,7 @@ const filteredEmployees = useMemo(() => {
     if (!form.owner.trim())
       nextErrors.owner = "Owner is required";
 
-    if (!form.team)
+    if (!form.teamId)
       nextErrors.team = "Team is required";
 
     if (
@@ -118,7 +123,33 @@ const filteredEmployees = useMemo(() => {
 
     if (!isEdit) delete data.id;
 
-    onSave?.(data);
+    setSaving(true);
+    try {
+      await onSave?.(data);
+    } catch (error) {
+      setErrors((prev) => ({
+        ...prev,
+        form: error.message || "Unable to save project.",
+      }));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const confirmRemove = async () => {
+    if (saving) return;
+    setSaving(true);
+    setErrors((prev) => ({ ...prev, form: "" }));
+    try {
+      await onDelete?.();
+    } catch (error) {
+      setErrors((prev) => ({
+        ...prev,
+        form: error.message || "Unable to delete project.",
+      }));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -169,43 +200,55 @@ const filteredEmployees = useMemo(() => {
 
           <div className="pf-field">
             <label>Assigned team *</label>
-            <select
-              value={form.team}
-              onChange={(e) => {
-                update("team", e.target.value);
+            <Dropdown
+              compact
+              className="project-form-dropdown"
+              value={form.teamId}
+              onChange={(teamId) => {
+                const selectedTeam = teams.find(
+                  (team) => String(team._id ?? team.id) === String(teamId)
+                );
                 setForm((prev) => ({
                   ...prev,
-                  team: e.target.value,
+                  team: selectedTeam?.teamName ?? selectedTeam?.name ?? "",
+                  teamId,
                   memberIds: [],
                 }));
+                setErrors((prev) => ({ ...prev, team: "" }));
               }}
-            >
-              <option value="">Select team</option>
-              {teams.map((team) => (
-                <option key={team} value={team}>
-                  {team}
-                </option>
-              ))}
-            </select>
+              options={[
+                { id: "", title: "Select team" },
+                ...teams.map((team) => ({
+                  id: String(team._id ?? team.id),
+                  title: team.teamName ?? team.name,
+                })),
+              ]}
+            />
             {errors.team && <small>{errors.team}</small>}
           </div>
 
           <div className="pf-field">
             <label>Start date</label>
-            <input
-              type="date"
+            <DatePicker
+              compact
+              className="project-form-date"
+              ariaLabel="Project start date"
+              placeholder="Select start date"
               value={form.startDate}
-              onChange={(e) => update("startDate", e.target.value)}
+              onChange={(value) => update("startDate", value)}
             />
           </div>
 
           <div className="pf-field">
             <label>Expected end date</label>
-            <input
-              type="date"
+            <DatePicker
+              compact
+              className="project-form-date"
+              ariaLabel="Expected project end date"
+              placeholder="Select expected end date"
               min={form.startDate || undefined}
               value={form.endDate}
-              onChange={(e) => update("endDate", e.target.value)}
+              onChange={(value) => update("endDate", value)}
             />
             {errors.endDate && <small>{errors.endDate}</small>}
           </div>
@@ -226,7 +269,7 @@ const filteredEmployees = useMemo(() => {
                 <div className="pf-chips">
                   {selectedEmployees.map((employee) => (
                     <span className="pf-chip" key={employee.id}>
-                      {employee.name}
+                      {employee.name} · {employee.role || "Employee"}
                       <button
                         type="button"
                         onClick={(event) => {
@@ -295,9 +338,6 @@ const filteredEmployees = useMemo(() => {
             <span>{employee.role}</span>
           </div>
 
-          <span className="pf-employee-id">
-            {employee.empId || employee.id}
-          </span>
         </label>
       );
     })
@@ -318,16 +358,16 @@ const filteredEmployees = useMemo(() => {
 
           <div className="pf-field">
             <label>Status</label>
-            <select
+            <Dropdown
+              compact
+              className="project-form-dropdown"
               value={form.status}
-              onChange={(e) => update("status", e.target.value)}
-            >
-              {PROJECT_STATUSES.map((status) => (
-                <option key={status.id} value={status.id}>
-                  {status.title}
-                </option>
-              ))}
-            </select>
+              onChange={(status) => update("status", status)}
+              options={PROJECT_STATUSES.map((status) => ({
+                id: status.id,
+                title: status.title,
+              }))}
+            />
           </div>
 
           <div className="pf-field">
@@ -342,18 +382,43 @@ const filteredEmployees = useMemo(() => {
           </div>
         </div>
 
+        {errors.form && !confirmDelete && (
+          <p className="pf-form-error" role="alert">{errors.form}</p>
+        )}
+
         {confirmDelete && (
-          <div className="pf-delete-confirm">
-            <span>Delete this project permanently?</span>
-            <button type="button" onClick={onDelete}>
-              Confirm delete
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(false)}
+          <div className="pf-delete-confirm-overlay">
+            <section
+              className="pf-delete-confirm-dialog"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="pf-delete-title"
             >
-              Keep project
-            </button>
+              <h3 id="pf-delete-title">Delete project?</h3>
+              <p>
+                This will permanently delete <strong>{form.name}</strong>.
+                This action cannot be undone.
+              </p>
+              {errors.form && <p className="pf-form-error" role="alert">{errors.form}</p>}
+              <div className="pf-delete-confirm-actions">
+                <button
+                  type="button"
+                  className="pf-cancel"
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="pf-delete-confirm-button"
+                  onClick={confirmRemove}
+                  disabled={saving}
+                >
+                  {saving ? "Deleting..." : "Delete project"}
+                </button>
+              </div>
+            </section>
           </div>
         )}
 
@@ -363,6 +428,7 @@ const filteredEmployees = useMemo(() => {
               type="button"
               className="pf-delete"
               onClick={() => setConfirmDelete(true)}
+              disabled={saving}
             >
               Delete
             </button>
@@ -372,11 +438,12 @@ const filteredEmployees = useMemo(() => {
               type="button"
               className="pf-cancel"
               onClick={onClose}
+              disabled={saving}
             >
               Cancel
             </button>
-            <button type="submit" className="pf-submit">
-              {isEdit ? "Save changes" : "Create project"}
+            <button type="submit" className="pf-submit" disabled={saving}>
+              {saving ? "Saving..." : isEdit ? "Save changes" : "Create project"}
             </button>
           </div>
         </div>

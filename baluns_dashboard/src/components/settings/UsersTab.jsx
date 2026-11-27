@@ -12,6 +12,8 @@ import StatusBadge from "../common/StatusBadge.jsx";
 import AddUserModal from "./AddUserModal.jsx";
 import CredentialsModal from "./CredentialsModal.jsx";
 import { useEmployees } from "../../context/EmployeesContext.jsx";
+import PageSkeleton from "../common/PageSkeleton.jsx";
+import { waitForMinimumLoading } from "../../utils/minimumLoadingTime.js";
 
 const employeeName = (employee) => {
   const firstName = employee.firstName ?? employee.firstname ?? "";
@@ -55,6 +57,7 @@ export default function UsersTab() {
     const controller = new AbortController();
   
     const fetchUsers = async () => {
+      const loadingStartedAt = Date.now();
       setLoading(true);
       setNotice("");
   
@@ -107,6 +110,8 @@ export default function UsersTab() {
         }
       } finally {
         if (!controller.signal.aborted) {
+          await waitForMinimumLoading(loadingStartedAt);
+          if (controller.signal.aborted) return;
           setLoading(false);
         }
       }
@@ -260,7 +265,7 @@ const handleCreate = async (data) => {
       >
         {notice && <p className="settings-notice" role="alert">{notice}</p>}
         {loading ? (
-  <p>Loading employees...</p>
+          <PageSkeleton variant="users-table" />
 ) : (
   <DataTable
     columns={columns}

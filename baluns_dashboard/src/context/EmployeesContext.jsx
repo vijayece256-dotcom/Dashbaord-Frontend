@@ -11,6 +11,7 @@ import {
 
 import { API_BASE_URL } from "../config/env.js";
 import { useAuth } from "./AuthContext.jsx";
+import { waitForMinimumLoading } from "../utils/minimumLoadingTime.js";
 
 const Context = createContext(null);
 
@@ -380,6 +381,7 @@ export function EmployeesProvider({ children }) {
       return;
     }
 
+    const loadingStartedAt = Date.now();
     setLoading(true);
     setAccountsLoading(true);
 
@@ -415,6 +417,7 @@ export function EmployeesProvider({ children }) {
       setEmployees([]);
       setAccounts([]);
     } finally {
+      await waitForMinimumLoading(loadingStartedAt);
       setLoading(false);
       setAccountsLoading(false);
     }

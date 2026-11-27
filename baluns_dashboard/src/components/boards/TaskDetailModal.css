@@ -38,6 +38,10 @@
 .detail-card { margin-top: 18px; overflow: hidden; border: 1px solid #eed8e0; border-radius: 18px; background: #fffafb; box-shadow: 0 10px 30px rgba(94,25,55,.04); }
 .detail-card h4 { margin: 0; padding: 16px 18px; background: #f8e0e9; color: #301b29; font-size: 15px; font-weight: 650; }
 .detail-row { display: grid; grid-template-columns: 88px minmax(0, 1fr); align-items: center; gap: 8px; min-height: 58px; padding: 10px 16px; border-top: 1px solid #f0e3e8; }
+.detail-row .detail-date-picker { width: 100%; }
+.detail-row .detail-date-picker .date-picker-trigger { height: 36px; border-color: transparent; background: transparent; padding: 0 7px; }
+.detail-row .detail-date-picker .date-picker-trigger:hover,
+.detail-row .detail-date-picker .date-picker-trigger:focus-visible { border-color: #e9cbd7; background: #fff; }
 .detail-label { color: #917e88; font-size: 13px; }
 .detail-person { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .detail-person-name { font-size: 14px; overflow: hidden; text-overflow: ellipsis; }

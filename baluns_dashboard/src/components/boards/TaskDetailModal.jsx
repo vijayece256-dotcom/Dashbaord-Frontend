@@ -14,6 +14,7 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { toEditorHtml } from "../../utils/richText.js";
 import { generateDummyEmployees } from "../../data/dummyEmployees.js";
 import Dropdown from "../common/Dropdown.jsx";
+import DatePicker from "../common/DatePicker.jsx";
 import "./CreateBoardModal.css";
 import "./TaskDetailModal.css";
 
@@ -568,24 +569,26 @@ const selectedReporter = findEmployee(reporter);
 
                 <div className="detail-row">
                   <label className="detail-label" htmlFor="detail-start">Start date</label>
-                  <input
+                  <DatePicker
                     id="detail-start"
-                    type="date"
-                    className="detail-inline-input"
+                    compact
+                    className="detail-date-picker"
+                    ariaLabel="Task start date"
                     value={startDate}
-                    onChange={(e) => onUpdate({ startDate: e.target.value })}
+                    onChange={(value) => onUpdate({ startDate: value })}
                   />
                 </div>
 
                 <div className="detail-row">
                   <label className="detail-label" htmlFor="detail-end">End date</label>
-                  <input
+                  <DatePicker
                     id="detail-end"
-                    type="date"
-                    className="detail-inline-input"
+                    compact
+                    className="detail-date-picker"
+                    ariaLabel="Task end date"
                     value={endDate}
                     min={startDate || undefined}
-                    onChange={(e) => onUpdate({ endDate: e.target.value, dueDate: e.target.value })}
+                    onChange={(value) => onUpdate({ endDate: value, dueDate: value })}
                   />
                 </div>
                 {dateProblem && <p className="detail-date-error">End date is before the start date.</p>}

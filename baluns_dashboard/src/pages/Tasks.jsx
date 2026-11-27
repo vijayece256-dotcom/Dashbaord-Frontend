@@ -5,6 +5,7 @@ import { useBoards } from "../context/BoardsContext.jsx";
 import Avatar from "../components/common/Avatar.jsx";
 import TaskCard from "../components/boards/TaskCard.jsx";
 import Dropdown from "../components/common/Dropdown.jsx";
+import DatePicker from "../components/common/DatePicker.jsx";
 import { formatDate } from "../utils/format.js";
 
 import "../components/boards/KanbanColumn.css";
@@ -253,9 +254,19 @@ const employees = useMemo(() => {
     );
   };
 
-  const employeeOptions = toOptions(
+  const employeeOptions = withAll(
     "All employees",
-    employees
+    employees.map((name) => ({
+      id: name,
+      title: name,
+      avatar: name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase(),
+    }))
   );
 
   const departmentOptions = toOptions(
@@ -481,20 +492,26 @@ const employees = useMemo(() => {
         {/* DATE FILTER */}
 
         <div className="tasks-dates">
-          <input
-            type="date"
+          <DatePicker
+            compact
+            className="tasks-date-picker"
+            ariaLabel="Due from"
+            placeholder="From date"
             value={f.from}
-            onChange={set("from")}
-            aria-label="Due from"
+            max={f.to || undefined}
+            onChange={setValue("from")}
           />
 
           <span>to</span>
 
-          <input
-            type="date"
+          <DatePicker
+            compact
+            className="tasks-date-picker"
+            ariaLabel="Due to"
+            placeholder="To date"
             value={f.to}
-            onChange={set("to")}
-            aria-label="Due to"
+            min={f.from || undefined}
+            onChange={setValue("to")}
           />
         </div>
 

@@ -87,7 +87,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Check } from "lucide-react";
 import "./Dropdown.css";
 
-export default function Dropdown({ value, options, onChange, label, compact = false, className = "" }) {
+export default function Dropdown({ value, options, onChange, label, compact = false, className = "", disabled = false }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const rootRef = useRef(null);
@@ -143,9 +143,11 @@ export default function Dropdown({ value, options, onChange, label, compact = fa
         className={`dropdown-trigger ${open ? "dropdown-trigger-open" : ""}`}
         aria-haspopup="listbox"
         aria-expanded={open}
+        disabled={disabled}
         onClick={() => (open ? setOpen(false) : openMenu())}
       >
-        {current.color && <span className="dropdown-dot" style={{ background: current.color }} />}
+        {current.avatar && <span className="dropdown-avatar" aria-hidden="true">{current.avatar}</span>}
+        {!current.avatar && current.color && <span className="dropdown-dot" style={{ background: current.color }} />}
         <span className="dropdown-text">
           {label && <span className="dropdown-label">{label}: </span>}
           {current.title}
@@ -164,7 +166,8 @@ export default function Dropdown({ value, options, onChange, label, compact = fa
               onMouseEnter={() => setActive(i)}
               onClick={() => choose(o.id)}
             >
-              {o.color && <span className="dropdown-dot" style={{ background: o.color }} />}
+              {o.avatar && <span className="dropdown-avatar" aria-hidden="true">{o.avatar}</span>}
+              {!o.avatar && o.color && <span className="dropdown-dot" style={{ background: o.color }} />}
               <span className="dropdown-text">{o.title}</span>
               {o.id === value && <Check size={16} className="dropdown-check" />}
             </li>

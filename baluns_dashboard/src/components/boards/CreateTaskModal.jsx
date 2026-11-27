@@ -10,6 +10,7 @@ import Modal from "../common/Modal.jsx";
 import Input from "../common/Input.jsx";
 import Button from "../common/Button.jsx";
 import Dropdown from "../common/Dropdown.jsx";
+import DatePicker from "../common/DatePicker.jsx";
 
 import "./CreateTaskModal.css";
 
@@ -258,11 +259,10 @@ export default function CreateTaskModal({
             </div>
 
             <div className="create-task-date">
-              <Input
-                type="date"
+              <DatePicker
                 label="Due date"
                 value={form.dueDate}
-                onChange={set("dueDate")}
+                onChange={setDropdown("dueDate")}
               />
             </div>
           </div>

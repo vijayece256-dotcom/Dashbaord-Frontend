@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { API_BASE_URL } from "../config/env.js";
 import { jwtDecode } from "jwt-decode";
 const AuthContext = createContext(null);
@@ -31,6 +31,34 @@ const nameFromEmail = (email) =>
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(loadSession);
   const [retryTick, setRetryTick] = useState(0);
+  const [serverStatus, setServerStatus] = useState("checking");
+
+  const checkServer = useCallback(async (showChecking = false) => {
+    if (showChecking) setServerStatus("checking");
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetch(`${API_BASE_URL}/healthCheck`, {
+        cache: "no-store",
+        signal: controller.signal,
+      });
+      if (!response.ok) throw new Error("Server health check failed.");
+      setServerStatus("online");
+      return true;
+    } catch {
+      setSession(null);
+      setServerStatus("offline");
+      return false;
+    } finally {
+      clearTimeout(timeout);
+    }
+  }, []);
+
+  useEffect(() => {
+    checkServer();
+    const timer = setInterval(() => checkServer(), 15000);
+    return () => clearInterval(timer);
+  }, [checkServer]);
 
   const sessionRef = useRef(session);
   sessionRef.current = session;
@@ -142,6 +170,7 @@ setSession((prev) =>
           : [],
         designation: profile.designation?.name ?? "",
         team: profile.team?.name ?? "",
+        phoneNumber: profile.phonenumber ?? profile.phoneNumber ?? profile.phone ?? "",
         avatar: "",
         mustChangePassword:
           data.message === "NEW_PASSWORD_REQUIRED",
@@ -209,6 +238,8 @@ setSession((prev) =>
         user: session?.user ?? null,
         token: session?.token ?? null,
         isAdmin: session?.user?.role === "admin",
+        serverStatus,
+        checkServer,
         signIn,
         logout,
         changePassword,

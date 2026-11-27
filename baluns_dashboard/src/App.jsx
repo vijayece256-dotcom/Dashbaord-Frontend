@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "./components/auth/ProtectedRoute.jsx";
 import DashboardLayout from "./components/layout/DashboardLayout.jsx";
+import RouteLoadingBoundary from "./components/layout/RouteLoadingBoundary.jsx";
 import Login from "./pages/Login.jsx";
 import ChangePassword from "./pages/ChangePassword.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
@@ -12,10 +13,61 @@ import Settings from "./pages/Settings.jsx";
 import Placeholder from "./pages/Placeholder.jsx";
 import Announcements from "./pages/Announcements.jsx";
 import Notifications from "./pages/Notifications.jsx";
+import { useAuth } from "./context/AuthContext.jsx";
 
 
 
 export default function App() {
+  const { serverStatus, checkServer } = useAuth();
+
+  if (serverStatus !== "online") {
+    const checking = serverStatus === "checking";
+
+    return (
+      <main
+        role="status"
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeContent: "center",
+          justifyItems: "center",
+          gap: 12,
+          padding: 24,
+          textAlign: "center",
+          background: "#f8f5f7",
+          color: "#302936",
+        }}
+      >
+        <h1 style={{ margin: 0, color: "#65132f" }}>
+          {checking ? "Connecting to server…" : "Server unavailable"}
+        </h1>
+        <p style={{ margin: 0, maxWidth: 420, color: "#706875" }}>
+          {checking
+            ? "Checking the backend connection."
+            : "The backend server is down or unreachable. Start the server, then try again."}
+        </p>
+        {!checking && (
+          <button
+            type="button"
+            onClick={() => checkServer(true)}
+            style={{
+              marginTop: 8,
+              padding: "10px 18px",
+              border: 0,
+              borderRadius: 8,
+              background: "#65132f",
+              color: "white",
+              font: "inherit",
+              cursor: "pointer",
+            }}
+          >
+            Retry connection
+          </button>
+        )}
+      </main>
+    );
+  }
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
@@ -23,16 +75,18 @@ export default function App() {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/tasks" element={<Tasks />} />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/team" element={<TeamPage />} />
-          <Route path="/analytics" element={<Placeholder title="Analytics" />} />
-          <Route path="/boards/:boardId" element={<BoardPage />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/announcements" element={<Announcements />} />
-<Route path="/notifications" element={<Notifications />} />
+          <Route element={<RouteLoadingBoundary />}>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/team" element={<TeamPage />} />
+            <Route path="/analytics" element={<Placeholder title="Analytics" />} />
+            <Route path="/boards/:boardId" element={<BoardPage />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/announcements" element={<Announcements />} />
+            <Route path="/notifications" element={<Notifications />} />
+          </Route>
         </Route>
       </Route>
 

@@ -1,5 +1,5 @@
 
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
 
 :root {
   --burgundy-900: #3d0a1e;
@@ -19,6 +19,18 @@
   --panel-bg: var(--grey-100);
   --radius-lg: 22px;
   --radius-pill: 999px;
+  --font-heading: "Manrope", "Plus Jakarta Sans", system-ui, sans-serif;
+}
+
+/* Keep page titles crisp and confident while body copy stays familiar. */
+.page-header .page-header-title,
+.topbar .topbar-greeting,
+.tasks-page .tasks-head h2,
+.team-page .team-heading h1,
+.page-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: -0.035em;
 }
 
 /* GLOBAL RESET */

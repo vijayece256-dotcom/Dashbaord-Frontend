@@ -40,8 +40,13 @@ export default function ChangePassword() {
     });
     setBusy(false);
 
-    // On success the account updates and this page redirects to the dashboard by itself
-    if (!result.ok) setErrors({ form: result.error });
+    if (!result.ok) {
+      setErrors({ form: result.error });
+      return;
+    }
+
+    // Temporary passwords are replaced before a fresh sign-in with the new password.
+    logout();
   };
 
   return (

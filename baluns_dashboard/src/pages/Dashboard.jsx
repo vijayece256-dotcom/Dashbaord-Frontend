@@ -2,10 +2,9 @@ import { useMemo } from "react";
 import { Layers, Play, Check, Pause, Users } from "lucide-react";
 import { useBoards } from "../context/BoardsContext.jsx";
 import { useEmployees } from "../context/EmployeesContext.jsx";
-// import { PROJECTS } from "../data/projects.js";
 import { useProjects } from "../context/ProjectsContext.jsx";
-import { formatDate } from "../utils/format.js";
 import { buildDashboardStats } from "../utils/dashboardStats.js";
+import PageSkeleton from "../components/common/PageSkeleton.jsx";
 import StatCard from "../components/common/StatCard.jsx";
 import DeliveryHealth from "../components/dashboard/DeliveryHealth.jsx";
 import TeamPerformance from "../components/dashboard/TeamPerformance.jsx";
@@ -14,8 +13,8 @@ import "./Dashboard.css";
 
 export default function Dashboard() {
   const { boards } = useBoards();
-  const { projects } = useProjects();
-  const { employees = [] } = useEmployees();
+  const { projects = [], loading: projectsLoading } = useProjects();
+  const { employees = [], loading: employeesLoading } = useEmployees();
 
 const stats = useMemo(
   () => buildDashboardStats(boards, projects, employees),
@@ -25,6 +24,10 @@ const stats = useMemo(
 
   const percentOfProjects = (n) =>
     stats.projectTotal ? `${Math.round((n / stats.projectTotal) * 100)}% of projects` : "No projects yet";
+
+  if (projectsLoading || employeesLoading) {
+    return <PageSkeleton variant="dashboard" />;
+  }
 
   return (
     <div className="dashboard">

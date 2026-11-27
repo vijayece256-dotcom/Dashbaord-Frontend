@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SlidersHorizontal } from "lucide-react";
 import TaskCard from "./TaskCard.jsx";
+import Dropdown from "../common/Dropdown.jsx";
 import "./KanbanColumn.css";
 
 const PRIORITIES = ["high", "medium", "low"];
@@ -103,18 +104,16 @@ export default function KanbanColumn({
               </div>
 
               <p className="kanban-filter-label">Assignee</p>
-              <select
-                className="kanban-filter-select"
+              <Dropdown
+                compact
+                className="kanban-assignee-dropdown"
                 value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-              >
-                <option value="all">Anyone</option>
-                {assignees.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { id: "all", title: "Anyone" },
+                  ...assignees.map((name) => ({ id: name, title: name })),
+                ]}
+                onChange={setAssignee}
+              />
 
               <button
                 type="button"

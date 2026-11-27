@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Modal from "../common/Modal.jsx";
 import { useProjects } from "../../context/ProjectsContext.jsx";
 import Button from "../common/Button.jsx";
@@ -12,10 +12,9 @@ import {
   belongsTo,
   bucket,
   taskMembers,
-  taskActivity,
 } from "../../utils/projectTasks.js";
 import "./ProjectModal.css";
-import { Upload, FileUp } from "lucide-react";
+import { Upload, FileUp, Trash2 } from "lucide-react";
 const TABS = ["Overview", "Tasks", "Activity History","Project Files",];
 
 const initials = (name = "") =>
@@ -51,10 +50,12 @@ export default function ProjectModal({
   project,
   employees = [],
   tasks = [],
-  activity = [],
   onAddMember,
   onRemoveMember,
   onUpdateProject,
+  onAddComment,
+  onDelete,
+  onLoadActivity,
   actorName = "Project Manager",
   onEdit,
   onClose,
@@ -77,6 +78,64 @@ export default function ProjectModal({
   const [commentText, setCommentText] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [activityItems, setActivityItems] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(false);
+  const [activityError, setActivityError] = useState("");
+  const activityRequestId = useRef(0);
+
+  async function refreshActivityItems() {
+    if (typeof onLoadActivity !== "function" || !liveProject?.id) return;
+    const requestId = ++activityRequestId.current;
+    setActivityLoading(true);
+    setActivityError("");
+    try {
+      const items = await onLoadActivity(liveProject.id);
+      if (requestId === activityRequestId.current) {
+        setActivityItems(Array.isArray(items) ? items : []);
+      }
+    } catch (err) {
+      if (requestId === activityRequestId.current) {
+        setActivityError(err.message || "Unable to load project activity.");
+      }
+    } finally {
+      if (requestId === activityRequestId.current) setActivityLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (
+      !["Overview", "Activity History"].includes(tab) ||
+      !liveProject?.id ||
+      typeof onLoadActivity !== "function"
+    ) return undefined;
+    let cancelled = false;
+    const requestId = ++activityRequestId.current;
+    setActivityLoading(true);
+    setActivityError("");
+
+    onLoadActivity(liveProject.id)
+      .then((items) => {
+        if (!cancelled && requestId === activityRequestId.current) {
+          setActivityItems(Array.isArray(items) ? items : []);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled && requestId === activityRequestId.current) {
+          setActivityItems([]);
+          setActivityError(err.message || "Unable to load project activity.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled && requestId === activityRequestId.current) {
+          setActivityLoading(false);
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [tab, liveProject?.id, onLoadActivity]);
 
   const projectTasks = useMemo(() => {
     if (!liveProject) return [];
@@ -123,44 +182,15 @@ export default function ProjectModal({
       )
   );
 
-  const projectActivity = useMemo(() => {
-    if (!liveProject) return [];
-
-    return [
-      ...taskActivity(projectTasks),
-
-      ...activity.filter((item) =>
-        belongsTo(item, liveProject)
-      ),
-
-      ...(liveProject.statusHistory || []).map(
-        (entry, index) => ({
-          id: entry.id || `status-${index}`,
-          text:
-            entry.text ||
-            `Status changed to ${
-              statusById(entry.to)?.title || entry.to
-            }`,
-          by: entry.by,
-          at: entry.at,
-        })
-      ),
-
-      ...(liveProject.comments || []).map(
-        (entry, index) => ({
-          id: entry.id || `comment-${index}`,
-          text: `Comment: ${entry.text}`,
-          by: entry.by,
-          at: entry.at,
-        })
-      ),
-    ]
-      .filter((item) => item?.at)
-      .sort(
-        (a, b) =>
-          new Date(b.at) - new Date(a.at)
-      );
-  }, [liveProject, projectTasks, activity]);
+  const latestCommentActivity = activityItems
+    .filter((item) => item.action === "COMMENT_ADDED")
+    .slice(0, 2)
+    .map((item) => ({
+      id: item._id ?? item.id,
+      text: item.commentText ?? item.message ?? "Comment added",
+      by: item.actorDetails?.actorName ?? item.actorRole ?? "",
+      at: item.createdAt ?? item.at,
+    }));
 
   const count = (value) =>
     projectTasks.filter(
@@ -212,7 +242,7 @@ export default function ProjectModal({
     if (
       !canUpdate ||
       saving ||
-      nextStatus === liveProject.status
+      (nextStatus === liveProject.status && !holdReason.trim())
     ) {
       return;
     }
@@ -242,30 +272,23 @@ export default function ProjectModal({
       }${reason ? ` — ${reason}` : ""}`,
     };
 
+    const statusChanged = nextStatus !== liveProject.status;
     const changes = {
       status: nextStatus,
-      statusHistory: [
-        ...(liveProject.statusHistory || []),
-        entry,
-      ],
-      ...(reason
-        ? {
-            comments: [
-              ...comments,
-              {
-                id: `comment-${Date.now()}`,
-                text: reason,
-                by: actorName,
-                at,
-                type: "hold",
-              },
-            ],
-          }
-        : {}),
+      statusHistory: statusChanged
+        ? [...(liveProject.statusHistory || []), entry]
+        : liveProject.statusHistory || [],
     };
 
     try {
       await saveProject(liveProject.id, changes);
+      if (nextStatus === "hold" && reason) {
+        if (typeof onAddComment !== "function") {
+          throw new Error("Project comments are unavailable.");
+        }
+        await onAddComment(liveProject.id, reason);
+        await refreshActivityItems();
+      }
       setHoldReason("");
     } catch (err) {
       setError(
@@ -291,17 +314,11 @@ export default function ProjectModal({
     setError("");
 
     try {
-      await saveProject(liveProject.id, {
-        comments: [
-          ...comments,
-          {
-            id: `comment-${Date.now()}`,
-            text: commentText.trim(),
-            by: actorName,
-            at: new Date().toISOString(),
-          },
-        ],
-      });
+      if (typeof onAddComment !== "function") {
+        throw new Error("Project comments are unavailable.");
+      }
+      await onAddComment(liveProject.id, commentText.trim());
+      await refreshActivityItems();
 
       setCommentText("");
     } catch (err) {
@@ -310,6 +327,20 @@ export default function ProjectModal({
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function deleteProject() {
+    if (typeof onDelete !== "function" || deleting) return;
+
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await onDelete(liveProject.id);
+    } catch (err) {
+      setDeleteError(err?.message || "Could not delete this project.");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -328,7 +359,7 @@ export default function ProjectModal({
               {liveProject.name || "Untitled project"}
             </h3>
             <p>
-              Project ID: {liveProject.id || "-"}
+              Project ID: {liveProject.projectID || "-"}
             </p>
           </div>
 
@@ -540,9 +571,6 @@ export default function ProjectModal({
                             {member.role || "Employee"}
                           </span>
 
-                          <small>
-                            {member.empId || member.id}
-                          </small>
                         </div>
 
                         {adding &&
@@ -694,34 +722,7 @@ export default function ProjectModal({
                   </button>
                 </form>
 
-                <div className="pd-comments">
-                  {comments.length === 0 ? (
-                    <p className="pd-empty">
-                      No comments yet.
-                    </p>
-                  ) : (
-                    [...comments]
-                      .reverse()
-                      .map((item, index) => (
-                        <div
-                          className="pd-comment"
-                          key={item.id || index}
-                        >
-                          <div className="pd-comment-meta">
-                            <strong>
-                              {item.by || "Unknown"}
-                            </strong>
-
-                            <span>
-                              {fmtStamp(item.at)}
-                            </span>
-                          </div>
-
-                          <p>{item.text}</p>
-                        </div>
-                      ))
-                  )}
-                </div>
+                
               </section>
 
               {/* LATEST ACTIVITY */}
@@ -730,7 +731,7 @@ export default function ProjectModal({
                 <div className="pd-card-head">
                   <h4>Latest activity</h4>
 
-                  {projectActivity.length > 3 && (
+                  {activityItems.length > 0 && (
                     <button
                       className="pd-link"
                       type="button"
@@ -743,9 +744,16 @@ export default function ProjectModal({
                   )}
                 </div>
 
-                <ActivityList
-                  items={projectActivity.slice(0, 3)}
-                />
+                {activityLoading ? (
+                  <p className="pd-empty">Loading latest comments...</p>
+                ) : activityError ? (
+                  <p className="pd-error" role="alert">{activityError}</p>
+                ) : (
+                  <ActivityList
+                    items={latestCommentActivity}
+                    emptyText="No comments yet."
+                  />
+                )}
               </section>
             </div>
           </div>
@@ -808,9 +816,20 @@ export default function ProjectModal({
         {tab === "Activity History" && (
           <div className="pd-body">
             <section className="pd-card">
-              <ActivityList
-                items={projectActivity}
-              />
+              {activityLoading ? (
+                <p className="pd-empty">Loading activity...</p>
+              ) : activityError ? (
+                <p className="pd-error" role="alert">{activityError}</p>
+              ) : (
+                <ActivityList
+                  items={activityItems.map((item) => ({
+                    id: item._id ?? item.id,
+                    text: item.message ?? "Project activity",
+                    by: item.actorDetails?.actorName ?? item.actorRole ?? "",
+                    at: item.createdAt ?? item.at,
+                  }))}
+                />
+              )}
             </section>
           </div>
         )}
@@ -873,6 +892,19 @@ export default function ProjectModal({
       {/* FOOTER */}
 
       <div className="modal-actions pd-actions">
+        {typeof onDelete === "function" && (
+          <Button
+            variant="secondary"
+            icon={Trash2}
+            onClick={() => {
+              setDeleteError("");
+              setShowDeleteConfirm(true);
+            }}
+            disabled={deleting}
+          >
+            Delete project
+          </Button>
+        )}
         <Button
           variant="secondary"
           onClick={onClose}
@@ -887,15 +919,50 @@ export default function ProjectModal({
           Edit project
         </Button>
       </div>
+
+      {showDeleteConfirm && (
+        <div className="pd-confirm-overlay">
+          <section
+            className="pd-confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="pd-delete-title"
+            aria-describedby="pd-delete-description"
+          >
+            <h3 id="pd-delete-title">Delete project?</h3>
+            <p id="pd-delete-description">
+              This will permanently delete <strong>{liveProject.name}</strong>.
+              This action cannot be undone.
+            </p>
+            {deleteError && <p className="pd-error" role="alert">{deleteError}</p>}
+            <div className="pd-confirm-actions">
+              <Button
+                variant="secondary"
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="pd-confirm-delete"
+                onClick={deleteProject}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : "Delete project"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      )}
     </Modal>
   );
 }
 
-function ActivityList({ items = [] }) {
+function ActivityList({ items = [], emptyText = "No activity yet." }) {
   if (!items.length) {
     return (
       <p className="pd-empty">
-        No activity yet.
+        {emptyText}
       </p>
     );
   }
